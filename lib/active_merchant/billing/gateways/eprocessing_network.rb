@@ -14,13 +14,12 @@ module ActiveMerchant #:nodoc:
 
       STANDARD_ERROR_CODE_MAPPING = {}
 
-      def initialize(options={})
+      def initialize(options = {})
         requires!(options, :ePNAccount, :RestrictKey)
-        @gateway_options = options
         super
       end
 
-      def purchase(money, payment, options={})
+      def purchase(money, payment, options = {})
         post = {}
         add_invoice(post, money, options)
         add_payment(post, payment)
@@ -30,7 +29,7 @@ module ActiveMerchant #:nodoc:
         commit('sale', post)
       end
 
-      def authorize(money, payment, options={})
+      def authorize(money, payment, options = {})
         post = {}
         add_invoice(post, money, options)
         add_payment(post, payment)
@@ -40,26 +39,26 @@ module ActiveMerchant #:nodoc:
         commit('authonly', post)
       end
 
-      def capture(money, authorization, options={})
+      def capture(money, authorization, options = {})
         commit('capture', post)
       end
 
-      def refund(money, authorization, options={})
+      def refund(money, authorization, options = {})
         commit('refund', post)
       end
 
-      def void(authorization, options={})
+      def void(authorization, options = {})
         commit('void', post)
       end
 
-      def verify(credit_card, options={})
+      def verify(credit_card, options = {})
         MultiResponse.run(:use_first_response) do |r|
           r.process { authorize(100, credit_card, options) }
           r.process(:ignore_result) { void(r.authorization, options) }
         end
       end
 
-      def store(credit_card, options={})
+      def store(credit_card, options = {})
         parameters = {
           CardNo: credit_card.number,
           ExpMonth: format(credit_card.month, :two_digits),
@@ -113,6 +112,8 @@ module ActiveMerchant #:nodoc:
         response
       end
 
+      # * <tt>action</tt> - Should be the 'TranType' value for the request body.
+      # * <tt>parameters</tt> - Data (hash) to be POSTed as the request body.
       def commit(action, parameters)
         parameters[:HTML] = 'No'
 
