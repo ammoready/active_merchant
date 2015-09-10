@@ -139,9 +139,12 @@ module ActiveMerchant #:nodoc:
       end
 
       def success_from(response)
+        response[:response].starts_with?('Y')
       end
 
       def message_from(response)
+        # Strip the first char ('Y', 'N', or 'U') to get just the response message.
+        response[:response].gsub(/\A./, '')
       end
 
       def authorization_from(response)
@@ -155,6 +158,7 @@ module ActiveMerchant #:nodoc:
           raise StandardError, "Unknown TranType: #{action}"
         end
 
+        # Add authentication params.
         parameters[:ePNAccount] = @options[:ePNAccount]
         parameters[:RestrictKey] = @options[:RestrictKey]
 
