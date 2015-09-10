@@ -199,6 +199,12 @@ epay:
   login: X
   password: Y
 
+# Working test credentials, no need to replace
+eprocessing_network:
+  ePNAccount: '080880'  # acts as username
+  password: '080880pw'
+  RestrictKey: 'yFqqXJh9Pqnugfr'  # API token
+
 evo_ca:
   username: demo
   password: password
