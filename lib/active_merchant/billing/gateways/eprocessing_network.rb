@@ -7,26 +7,35 @@ module ActiveMerchant #:nodoc:
       self.supported_countries = ['US']
       self.default_currency = 'USD'
       self.supported_cardtypes = [:visa, :master, :american_express, :discover]
-      self.money_format = :cents
+      self.money_format = :dollars
 
       self.homepage_url = 'https://www.eprocessingnetwork.com/'
       self.display_name = 'eProcessing Network'
 
       STANDARD_ERROR_CODE_MAPPING = {}
 
+      # Options for the 'CVV2Type' parameter.
+      CVV_TYPES = {
+        do_not_use_cvv: 0,
+        use_cvv: 1,
+        cvv_illegible: 2,
+        no_cvv_imprinted: 9,
+      }
+
       def initialize(options = {})
         requires!(options, :ePNAccount, :RestrictKey)
         super
       end
 
-      def purchase(money, payment, options = {})
+      def purchase(money, options = {})
         post = {}
-        add_invoice(post, money, options)
-        add_payment(post, payment)
-        add_address(post, payment, options)
-        add_customer_data(post, options)
 
-        commit('sale', post)
+        add_invoice(post, money, options)
+        add_payment(post, options)
+        add_address(post, options)
+        # add_customer_data(post, options)
+
+        commit(:Sale, post)
       end
 
       def authorize(money, payment, options = {})
@@ -81,15 +90,36 @@ module ActiveMerchant #:nodoc:
       def add_customer_data(post, options)
       end
 
-      def add_address(post, creditcard, options)
+      def add_address(post, options)
+        return unless options.has_key?(:address)
+        address = options[:address]
+
+        post[:Address] = address[:Address]
+        post[:City] = address[:City]
+        post[:State] = address[:State]
+        post[:Zip] = address[:Zip]
       end
 
       def add_invoice(post, money, options)
-        post[:amount] = amount(money)
-        post[:currency] = (options[:currency] || currency(money))
+        post[:Total] = amount(money)
       end
 
-      def add_payment(post, payment)
+      def add_payment(post, options)
+        if options.has_key?(:TransID)
+          # Use TransID as payment
+          post[:TransID] = options[:TransID]
+        elsif options.has_key?(:credit_card)
+          # Use CreditCard object as payment.
+          credit_card = options[:credit_card]
+
+          post[:CardNo] = credit_card.number
+          post[:ExpMonth] = format(credit_card.month, :two_digit)
+          post[:ExpYear] = format(credit_card.year, :two_digit)
+          post[:CVV2Type] = CVV_TYPES[:use_cvv]
+          post[:CVV2] = credit_card.verification_value
+        else
+          raise StandardError, "No payment present in options: #{options.inspect}"
+        end
       end
 
       # Example response:
@@ -127,13 +157,15 @@ module ActiveMerchant #:nodoc:
 
         STDOUT.puts "-- DEBUG: #{self.class}#commit() response: #{response.inspect}"
 
+        # TODO: Parse out AVS result.
+        # TODO: Parse out CVV result.
         Response.new(
           success_from(response),
           message_from(response),
           response,
           authorization: authorization_from(response),
-          avs_result: AVSResult.new(code: response["some_avs_response_key"]),
-          cvv_result: CVVResult.new(response["some_cvv_response_key"]),
+          avs_result: AVSResult.new(code: response[:avs_response]),
+          cvv_result: CVVResult.new(response[:cvv_response]),
           test: test?,
           error_code: error_code_from(response)
         )
@@ -153,6 +185,8 @@ module ActiveMerchant #:nodoc:
 
       def post_data(action, parameters = {})
         parameters[:TranType] = case action
+        when :Sale
+          'Sale'
         when :Store
           'Store'
         else
