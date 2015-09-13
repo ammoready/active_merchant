@@ -166,14 +166,13 @@ module ActiveMerchant #:nodoc:
 
         STDOUT.puts "-- DEBUG: #{self.class}#commit() response: #{response.inspect}"
 
-        # TODO: Parse out CVV result.
         Response.new(
           success_from(response),
           message_from(response),
           response,
           authorization: authorization_from(response),
           avs_result: avs_result_from(response),
-          cvv_result: CVVResult.new(response[:cvv_response]),
+          cvv_result: cvv_result_from(response),
           test: test?,
           error_code: error_code_from(response)
         )
@@ -191,6 +190,11 @@ module ActiveMerchant #:nodoc:
       def avs_result_from(response)
         code_match = response[:avs_response].match(/\((.)\)\Z/)
         code_match ? AVSResult.new(code: code_match[0]) : nil
+      end
+
+      def cvv_result_from(response)
+        code_match = response[:cvv_response].match(/\((.)\)\Z/)
+        code_match ? CVVResult.new(code_match[0].gsub(/\(|\)/, '')) : nil
       end
 
       def authorization_from(response)
