@@ -108,6 +108,7 @@ module ActiveMerchant #:nodoc:
 
       def add_invoice(post, money, options)
         post[:Total] = amount(money)
+        post[:Description] = options[:description] unless options[:description].nil?
       end
 
       def add_payment(post, options)
