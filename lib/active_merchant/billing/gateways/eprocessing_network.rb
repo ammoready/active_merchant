@@ -189,7 +189,7 @@ module ActiveMerchant #:nodoc:
 
       def avs_result_from(response)
         code_match = response[:avs_response].match(/\((.)\)\Z/)
-        code_match ? AVSResult.new(code: code_match[0]) : nil
+        code_match ? AVSResult.new(code: code_match[0].gsub(/\(|\)/, '')) : nil
       end
 
       def cvv_result_from(response)
