@@ -33,7 +33,7 @@ module ActiveMerchant #:nodoc:
         add_invoice(post, money, options)
         add_payment(post, options)
         add_address(post, options)
-        # add_customer_data(post, options)
+        add_customer_data(post, options)
 
         commit(:Sale, post)
       end
@@ -75,6 +75,7 @@ module ActiveMerchant #:nodoc:
         post[:ExpYear] = format(credit_card.year, :two_digits)
 
         add_address(post, options)
+        add_customer_data(post, options)
 
         commit(:Store, post)
       end
@@ -90,6 +91,9 @@ module ActiveMerchant #:nodoc:
       private
 
       def add_customer_data(post, options)
+        post[:FirstName] = options[:first_name] unless options[:first_name].nil?
+        post[:LastName] = options[:last_name] unless options[:last_name].nil?
+        post[:Company] = options[:company] unless options[:company].nil?
       end
 
       def add_address(post, options)
