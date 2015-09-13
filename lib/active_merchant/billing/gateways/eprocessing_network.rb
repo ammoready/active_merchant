@@ -100,10 +100,11 @@ module ActiveMerchant #:nodoc:
         return unless options.has_key?(:address)
         address = options[:address]
 
-        post[:Address] = address[:Address]
-        post[:City] = address[:City]
-        post[:State] = address[:State]
-        post[:Zip] = address[:Zip]
+        post[:Address] = address[:address] unless address[:address].nil?
+        post[:City] = address[:city] unless address[:city].nil?
+        post[:State] = address[:state] unless address[:state].nil?
+        post[:Zip] = address[:zip] unless address[:zip].nil?
+        post[:Phone] = address[:phone] unless address[:phone].nil?
       end
 
       def add_invoice(post, money, options)
@@ -112,9 +113,10 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_payment(post, options)
-        if options.has_key?(:TransID)
+        if options.has_key?(:transaction_id)
           # Use TransID as payment
-          post[:TransID] = options[:TransID]
+          post[:TransID] = options[:transaction_id]
+          post[:CVV2Type] = CVV_TYPES[:do_not_use_cvv]
         elsif options.has_key?(:credit_card)
           # Use CreditCard object as payment.
           credit_card = options[:credit_card]
