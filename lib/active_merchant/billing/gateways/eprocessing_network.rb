@@ -68,13 +68,15 @@ module ActiveMerchant #:nodoc:
       end
 
       def store(credit_card, options = {})
-        parameters = {
-          CardNo: credit_card.number,
-          ExpMonth: format(credit_card.month, :two_digits),
-          ExpYear: format(credit_card.year, :two_digits),
-        }.merge(options)
+        post = {}
 
-        commit(:Store, parameters)
+        post[:CardNo] = credit_card.number
+        post[:ExpMonth] = format(credit_card.month, :two_digits)
+        post[:ExpYear] = format(credit_card.year, :two_digits)
+
+        add_address(post, options)
+
+        commit(:Store, post)
       end
 
       def supports_scrubbing?
