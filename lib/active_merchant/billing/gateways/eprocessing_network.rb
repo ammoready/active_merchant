@@ -60,8 +60,13 @@ module ActiveMerchant #:nodoc:
         commit(:Auth2Sale, post)
       end
 
-      def refund(money, authorization, options = {})
-        commit('refund', post)
+      def refund(money, options = {})
+        post = {}
+
+        add_invoice(post, money, options)
+        add_payment(post, options)
+
+        commit(:Return, post)
       end
 
       def void(authorization, options = {})
@@ -214,6 +219,8 @@ module ActiveMerchant #:nodoc:
           'Auth2Sale'
         when :AuthOnly
           'AuthOnly'
+        when :Return
+          'Return'
         when :Sale
           'Sale'
         when :Store
