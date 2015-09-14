@@ -196,7 +196,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def success_from(response)
-        response[:response].starts_with?('Y')
+        response[:response].start_with?('Y')
       end
 
       def message_from(response)
