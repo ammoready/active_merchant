@@ -215,6 +215,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def authorization_from(response)
+        response[:transaction_id]
       end
 
       def post_data(action, parameters = {})
