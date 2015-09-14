@@ -69,8 +69,12 @@ module ActiveMerchant #:nodoc:
         commit(:Return, post)
       end
 
-      def void(authorization, options = {})
-        commit('void', post)
+      def void(transaction_id)
+        post = {}
+
+        add_payment(post, { transaction_id: transaction_id })
+
+        commit(:Void, post)
       end
 
       def verify(credit_card, options = {})
@@ -225,6 +229,8 @@ module ActiveMerchant #:nodoc:
           'Sale'
         when :Store
           'Store'
+        when :Void
+          'Void'
         else
           raise StandardError, "Unknown TranType: #{action}"
         end
