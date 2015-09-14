@@ -49,8 +49,13 @@ module ActiveMerchant #:nodoc:
         commit(:AuthOnly, post)
       end
 
-      def capture(money, authorization, options = {})
-        commit('capture', post)
+      def capture(money, options = {})
+        post = {}
+
+        add_invoice(post, money, options)
+        add_payment(post, options)
+
+        commit(:Auth2Sale, post)
       end
 
       def refund(money, authorization, options = {})
@@ -203,6 +208,8 @@ module ActiveMerchant #:nodoc:
 
       def post_data(action, parameters = {})
         parameters[:TranType] = case action
+        when :Auth2Sale
+          'Auth2Sale'
         when :AuthOnly
           'AuthOnly'
         when :Sale
