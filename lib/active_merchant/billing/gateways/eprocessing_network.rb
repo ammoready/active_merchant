@@ -98,7 +98,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def supports_scrubbing?
-        true
+        false
       end
 
       def scrub(transcript)
