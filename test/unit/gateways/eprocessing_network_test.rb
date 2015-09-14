@@ -2,31 +2,34 @@ require 'test_helper'
 
 class EprocessingNetworkTest < Test::Unit::TestCase
   def setup
-    @gateway = EprocessingNetworkGateway.new(some_credential: 'login', another_credential: 'password')
+    @gateway = EprocessingNetworkGateway.new(ePNAccount: '080880', RestrictKey: 'yFqqXJh9Pqnugfr')
     @credit_card = credit_card
-    @amount = 100
-
-    @options = {
-      order_id: '1',
-      billing_address: address,
-      description: 'Store Purchase'
-    }
+    @amount = 1000
   end
 
   def test_successful_purchase
     @gateway.expects(:ssl_post).returns(successful_purchase_response)
 
-    response = @gateway.purchase(@amount, @credit_card, @options)
+    options = {
+      credit_card: @credit_card
+    }
+
+    response = @gateway.purchase(@amount, options)
     assert_success response
 
-    assert_equal 'REPLACE', response.authorization
+    assert_equal '20080828140719-080880-23', response.authorization
     assert response.test?
   end
 
   def test_failed_purchase
     @gateway.expects(:ssl_post).returns(failed_purchase_response)
 
-    response = @gateway.purchase(@amount, @credit_card, @options)
+    options = {
+      credit_card: @credit_card
+    }
+
+    # An amount ending with '1' returns card declined error (ex. $2.01).
+    response = @gateway.purchase(20, options)
     assert_failure response
     assert_equal Gateway::STANDARD_ERROR_CODE[:card_declined], response.error_code
   end
@@ -64,41 +67,14 @@ class EprocessingNetworkTest < Test::Unit::TestCase
   def test_failed_verify
   end
 
-  def test_scrub
-    assert @gateway.supports_scrubbing?
-    assert_equal @gateway.scrub(pre_scrubbed), post_scrubbed
-  end
-
   private
 
-  def pre_scrubbed
-    %q(
-      Run the remote tests for this gateway, and then put the contents of transcript.log here.
-    )
-  end
-
-  def post_scrubbed
-    %q(
-      Put the scrubbed contents of transcript.log here after implementing your scrubbing function.
-      Things to scrub:
-        - Credit card number
-        - CVV
-        - Sensitive authentication details
-    )
-  end
-
   def successful_purchase_response
-    %(
-      Easy to capture by setting the DEBUG_ACTIVE_MERCHANT environment variable
-      to "true" when running remote tests:
-
-      $ DEBUG_ACTIVE_MERCHANT=true ruby -Itest \
-        test/remote/gateways/remote_eprocessing_network_test.rb \
-        -n test_successful_purchase
-    )
+    %q("YAPPROVED 184752","AVS Match 9 Digit Zip and Address (X)","CVV2 Match (M)","23","20080828140719-080880-23")
   end
 
   def failed_purchase_response
+    %q("NDECLINED","Postal Code match - Address not verified - International (P)","CVV2 Match (M)","337587","20150914161218-080880-337587-0")
   end
 
   def successful_authorize_response
