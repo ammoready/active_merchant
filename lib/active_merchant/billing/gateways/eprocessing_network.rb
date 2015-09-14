@@ -39,6 +39,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def authorize(money, options = {})
+        requires!(options, :credit_card, :address)
         post = {}
 
         add_invoice(post, money, options)
@@ -50,6 +51,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def capture(money, options = {})
+        requires!(options, :transaction_id)
         post = {}
 
         add_invoice(post, money, options)
