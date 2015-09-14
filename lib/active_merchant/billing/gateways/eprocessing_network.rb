@@ -238,8 +238,10 @@ module ActiveMerchant #:nodoc:
       end
 
       def error_code_from(response)
-        unless success_from(response)
-          # TODO: lookup error code for this response
+        return if success_from(response)
+
+        if response[:response] == 'NDECLINED'
+          STANDARD_ERROR_CODE[:card_declined]
         end
       end
     end
