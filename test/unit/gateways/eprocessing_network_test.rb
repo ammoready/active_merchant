@@ -59,9 +59,20 @@ class EprocessingNetworkTest < Test::Unit::TestCase
   end
 
   def test_successful_capture
+    @gateway.expects(:ssl_post).returns(successful_capture_response)
+
+    response = @gateway.capture(@amount, { transaction_id: @transaction_id })
+    assert_success response
+
+    assert_equal @transaction_id, response.authorization
+    assert response.test?
   end
 
   def test_failed_capture
+    @gateway.expects(:ssl_post).returns(failed_capture_response)
+
+    response = @gateway.capture(@failed_amount, { transaction_id: @failed_transaction_id })
+    assert_failure response
   end
 
   def test_successful_refund
@@ -104,9 +115,11 @@ class EprocessingNetworkTest < Test::Unit::TestCase
   end
 
   def successful_capture_response
+    %Q("YSUCCESSFUL","","","337607","#{@transaction_id}")
   end
 
   def failed_capture_response
+    %Q("NCannot Find Xact","","","337612","#{@failed_transaction_id}")
   end
 
   def successful_refund_response
