@@ -4,40 +4,58 @@ class EprocessingNetworkTest < Test::Unit::TestCase
   def setup
     @gateway = EprocessingNetworkGateway.new(ePNAccount: '080880', RestrictKey: 'yFqqXJh9Pqnugfr')
     @credit_card = credit_card
+    @transaction_id = '20080828140719-080880-23'
+    @failed_transaction_id = '20150914161218-080880-337587-0'
     @amount = 1000
+    # An amount ending with '1' returns card declined error (ex. $2.01).
+    @failed_amount = 201
+
+    @options = {
+      credit_card: @credit_card,
+      address: {
+        address: '123 Fake St.',
+        city: 'Testville',
+        state: 'SC',
+        zip: '12345',
+        phone: '555-555-1234',
+      }
+    }
   end
 
   def test_successful_purchase
     @gateway.expects(:ssl_post).returns(successful_purchase_response)
 
-    options = {
-      credit_card: @credit_card
-    }
-
-    response = @gateway.purchase(@amount, options)
+    response = @gateway.purchase(@amount, @options)
     assert_success response
 
-    assert_equal '20080828140719-080880-23', response.authorization
+    assert_equal @transaction_id, response.authorization
     assert response.test?
   end
 
   def test_failed_purchase
     @gateway.expects(:ssl_post).returns(failed_purchase_response)
 
-    options = {
-      credit_card: @credit_card
-    }
-
-    # An amount ending with '1' returns card declined error (ex. $2.01).
-    response = @gateway.purchase(20, options)
+    response = @gateway.purchase(@failed_amount, @options)
     assert_failure response
     assert_equal Gateway::STANDARD_ERROR_CODE[:card_declined], response.error_code
   end
 
   def test_successful_authorize
+    @gateway.expects(:ssl_post).returns(successful_authorize_response)
+
+    response = @gateway.authorize(@amount, @options)
+    assert_success response
+
+    assert_equal @transaction_id, response.authorization
+    assert response.test?
   end
 
   def test_failed_authorize
+    @gateway.expects(:ssl_post).returns(failed_authorize_response)
+
+    response = @gateway.authorize(@failed_amount, @options)
+    assert_failure response
+    assert_equal Gateway::STANDARD_ERROR_CODE[:card_declined], response.error_code
   end
 
   def test_successful_capture
@@ -70,17 +88,19 @@ class EprocessingNetworkTest < Test::Unit::TestCase
   private
 
   def successful_purchase_response
-    %q("YAPPROVED 184752","AVS Match 9 Digit Zip and Address (X)","CVV2 Match (M)","23","20080828140719-080880-23")
+    %Q("YAPPROVED 184752","AVS Match 9 Digit Zip and Address (X)","CVV2 Match (M)","23","#{@transaction_id}")
   end
 
   def failed_purchase_response
-    %q("NDECLINED","Postal Code match - Address not verified - International (P)","CVV2 Match (M)","337587","20150914161218-080880-337587-0")
+    %Q("NDECLINED","Postal Code match - Address not verified - International (P)","CVV2 Match (M)","337587","#{@failed_transaction_id}")
   end
 
   def successful_authorize_response
+    %Q("YAPPROVED 184752","AVS Match 9 Digit Zip and Address (X)","CVV2 Match (M)","23","#{@transaction_id}")
   end
 
   def failed_authorize_response
+    %Q("NDECLINED","Postal Code match - Address not verified - International (P)","CVV2 Match (M)","337587","#{@failed_transaction_id}")
   end
 
   def successful_capture_response
