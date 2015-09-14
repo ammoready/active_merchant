@@ -151,7 +151,6 @@ module ActiveMerchant #:nodoc:
       # Example response:
       # "YAPPROVED 184752","AVS Match 9 Digit Zip and Address (X)","CVV2 Match (M)","23","20080828140719-080880-23"
       def parse(body)
-        STDOUT.puts "-- DEBUG: #{self.class}#parse() body: #{body.inspect}"
         response = {}
 
         # Remove the double quotes from response values.
@@ -175,13 +174,7 @@ module ActiveMerchant #:nodoc:
 
         url = (test? ? test_url : live_url)
 
-        STDOUT.puts "-- DEBUG: #{self.class}#commit() parameters: #{parameters.inspect}"
-        STDOUT.puts "-- DEBUG: #{self.class}#commit() url: #{url.inspect}"
-        STDOUT.puts "-- DEBUG: #{self.class}#commit() post_data(): #{post_data(action, parameters).inspect}"
-
         response = parse(ssl_post(url, post_data(action, parameters)))
-
-        STDOUT.puts "-- DEBUG: #{self.class}#commit() response: #{response.inspect}"
 
         Response.new(
           success_from(response),
