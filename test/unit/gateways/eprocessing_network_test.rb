@@ -76,9 +76,20 @@ class EprocessingNetworkTest < Test::Unit::TestCase
   end
 
   def test_successful_refund
+    @gateway.expects(:ssl_post).returns(successful_refund_response)
+
+    response = @gateway.refund(@amount, { transaction_id: @transaction_id })
+    assert_success response
+
+    assert_equal @transaction_id, response.authorization
+    assert response.test?
   end
 
   def test_failed_refund
+    @gateway.expects(:ssl_post).returns(failed_refund_response)
+
+    response = @gateway.refund(@failed_amount, { transaction_id: @failed_transaction_id })
+    assert_failure response
   end
 
   def test_successful_void
@@ -123,9 +134,11 @@ class EprocessingNetworkTest < Test::Unit::TestCase
   end
 
   def successful_refund_response
+    %Q("YSUCCESSFUL","","","337607","#{@transaction_id}")
   end
 
   def failed_refund_response
+    %Q("UTransID Not Found")
   end
 
   def successful_void_response
