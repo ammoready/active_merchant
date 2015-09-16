@@ -93,9 +93,21 @@ class EprocessingNetworkTest < Test::Unit::TestCase
   end
 
   def test_successful_void
+    @gateway.expects(:ssl_post).returns(successful_void_response)
+
+    response = @gateway.void(@transaction_id)
+    assert_success response
+
+    # Void transaction IDs end with '-5'
+    assert_equal "#{@transaction_id}-5", response.authorization
+    assert response.test?
   end
 
   def test_failed_void
+    @gateway.expects(:ssl_post).returns(failed_void_response)
+
+    response = @gateway.void(@failed_transaction_id)
+    assert_failure response
   end
 
   def test_successful_verify
@@ -142,8 +154,10 @@ class EprocessingNetworkTest < Test::Unit::TestCase
   end
 
   def successful_void_response
+    %Q("YSUCCESSFUL","","","337981","#{@transaction_id}-5")
   end
 
   def failed_void_response
+    %Q("NCannot Find Xact","","","337989","#{@failed_transaction_id}-5")
   end
 end
