@@ -1,24 +1,30 @@
 require 'test_helper'
 
 class EprocessingNetworkTest < Test::Unit::TestCase
+  include CommStub
+
   def setup
     @gateway = EprocessingNetworkGateway.new(ePNAccount: '080880', RestrictKey: 'yFqqXJh9Pqnugfr')
     @credit_card = credit_card
+
     @transaction_id = '20080828140719-080880-23'
     @failed_transaction_id = '20150914161218-080880-337587-0'
+
     @amount = 1000
     # An amount ending with '1' returns card declined error (ex. $2.01).
     @failed_amount = 201
 
+    @address = {
+      address: '123 Fake St.',
+      city: 'Testville',
+      state: 'SC',
+      zip: '12345',
+      phone: '555-555-1234',
+    }
+
     @options = {
       credit_card: @credit_card,
-      address: {
-        address: '123 Fake St.',
-        city: 'Testville',
-        state: 'SC',
-        zip: '12345',
-        phone: '555-555-1234',
-      }
+      address: @address,
     }
   end
 
@@ -111,12 +117,24 @@ class EprocessingNetworkTest < Test::Unit::TestCase
   end
 
   def test_successful_verify
+    response = stub_comms do
+      @gateway.verify(@credit_card, { address: @address })
+    end.respond_with(successful_authorize_response, successful_void_response)
+    assert_success response
   end
 
   def test_successful_verify_with_failed_void
+    response = stub_comms do
+      @gateway.verify(@credit_card, { address: @address })
+    end.respond_with(successful_authorize_response, failed_void_response)
+    assert_success response
   end
 
   def test_failed_verify
+    response = stub_comms do
+      @gateway.verify(@credit_card, { address: @address })
+    end.respond_with(failed_authorize_response, successful_void_response)
+    assert_failure response
   end
 
   private
