@@ -77,6 +77,14 @@ module ActiveMerchant #:nodoc:
         commit(:Void, post)
       end
 
+      def void_authorization(transaction_id)
+        post = {}
+
+        add_payment(post, { transaction_id: transaction_id })
+
+        commit(:AuthDel, post)
+      end
+
       def verify(credit_card, options = {})
         MultiResponse.run(:use_first_response) do |r|
           r.process { authorize(100, { credit_card: credit_card }.merge(options)) }
@@ -217,6 +225,8 @@ module ActiveMerchant #:nodoc:
           'Auth2Sale'
         when :AuthOnly
           'AuthOnly'
+        when :AuthDel
+          'AuthDel'
         when :Return
           'Return'
         when :Sale
