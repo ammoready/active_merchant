@@ -16,13 +16,44 @@ class RemoteClearhausTest < Test::Unit::TestCase
     assert_equal 'Approved', response.message
   end
 
-  def test_signing_request
+  def test_successful_signing_request
     gateway = ClearhausGateway.new(fixtures(:clearhaus_secure))
 
-    assert gateway.options[:signing_key]
+    assert gateway.options[:private_key]
     assert auth = gateway.authorize(@amount, @credit_card, @options)
     assert_success auth
     assert_equal 'Approved', auth.message
+  end
+
+  def test_cleans_whitespace_from_private_key
+    credentials = fixtures(:clearhaus_secure)
+    credentials[:private_key] = "     #{credentials[:private_key]}     "
+    gateway = ClearhausGateway.new(credentials)
+
+    assert gateway.options[:private_key]
+    assert auth = gateway.authorize(@amount, @credit_card, @options)
+    assert_success auth
+    assert_equal 'Approved', auth.message
+  end
+
+  def test_unsuccessful_signing_request
+    credentials = fixtures(:clearhaus_secure)
+    credentials[:private_key] = "foo"
+    gateway = ClearhausGateway.new(credentials)
+
+    assert gateway.options[:private_key]
+    assert auth = gateway.authorize(@amount, @credit_card, @options)
+    assert_failure auth
+    assert_equal "Neither PUB key nor PRIV key: not enough data", auth.message
+
+    credentials = fixtures(:clearhaus_secure)
+    credentials[:signing_key] = "foo"
+    gateway = ClearhausGateway.new(credentials)
+
+    assert gateway.options[:signing_key]
+    assert auth = gateway.authorize(@amount, @credit_card, @options)
+    assert_failure auth
+    assert_equal "invalid signing api-key", auth.message
   end
 
   def test_successful_purchase_without_cvv
@@ -115,6 +146,16 @@ class RemoteClearhausTest < Test::Unit::TestCase
     assert_equal 'invalid transaction id', response.message
   end
 
+  def test_successful_refund_of_capture
+    auth = @gateway.authorize(@amount, @credit_card, @options)
+    capture = @gateway.capture(@amount, auth.authorization)
+    assert_success capture
+
+    assert refund = @gateway.refund(@amount, capture.authorization)
+    assert_success refund
+    assert_equal 'Approved', refund.message
+  end
+
   def test_successful_void
     auth = @gateway.authorize(@amount, @credit_card, @options)
     assert_success auth
@@ -140,6 +181,12 @@ class RemoteClearhausTest < Test::Unit::TestCase
     response = @gateway.verify(@declined_card, @options)
     assert_failure response
     assert_match %r{Invalid card number}, response.message
+  end
+
+  def test_successful_authorize_with_nonfractional_currency
+    assert response = @gateway.authorize(100, @credit_card, @options.merge(:currency => 'KRW'))
+    assert_equal 1, response.params['amount']
+    assert_success response
   end
 
   def test_invalid_login

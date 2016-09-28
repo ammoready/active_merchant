@@ -72,6 +72,20 @@ class BraintreeBlueTest < Test::Unit::TestCase
     assert_equal "void_transaction_id", response.authorization
   end
 
+  def test_verify_good_credentials
+    Braintree::TransactionGateway.any_instance.expects(:find).
+      with('non_existent_token').
+      raises(Braintree::NotFoundError)
+    assert @gateway.verify_credentials
+  end
+
+  def test_verify_bad_credentials
+    Braintree::TransactionGateway.any_instance.expects(:find).
+      with('non_existent_token').
+      raises(Braintree::AuthenticationError)
+    assert !@gateway.verify_credentials
+  end
+
   def test_user_agent_includes_activemerchant_version
     assert @internal_gateway.config.user_agent.include?("(ActiveMerchant #{ActiveMerchant::VERSION})")
   end
@@ -556,6 +570,9 @@ class BraintreeBlueTest < Test::Unit::TestCase
     assert_nil @gateway.send(:create_transaction_parameters, 100, credit_card("41111111111111111111"),{})[:channel]
     ActiveMerchant::Billing::BraintreeBlueGateway.application_id = 'ABC123'
     assert_equal @gateway.send(:create_transaction_parameters, 100, credit_card("41111111111111111111"),{})[:channel], "ABC123"
+
+    gateway = BraintreeBlueGateway.new(:merchant_id => 'test', :public_key => 'test', :private_key => 'test', channel: "overidden-channel")
+    assert_equal gateway.send(:create_transaction_parameters, 100, credit_card("41111111111111111111"),{})[:channel], "overidden-channel"
   ensure
     ActiveMerchant::Billing::BraintreeBlueGateway.application_id = nil
   end
@@ -563,9 +580,10 @@ class BraintreeBlueTest < Test::Unit::TestCase
   def test_successful_purchase_with_descriptor
     Braintree::TransactionGateway.any_instance.expects(:sale).with do |params|
       (params[:descriptor][:name] == 'wow*productname') &&
-      (params[:descriptor][:phone] == '4443331112')
+      (params[:descriptor][:phone] == '4443331112') &&
+      (params[:descriptor][:url] == 'wow.com')
     end.returns(braintree_result)
-    @gateway.purchase(100, credit_card("41111111111111111111"), descriptor_name: 'wow*productname', descriptor_phone: '4443331112')
+    @gateway.purchase(100, credit_card("41111111111111111111"), descriptor_name: 'wow*productname', descriptor_phone: '4443331112', descriptor_url: 'wow.com')
   end
 
   def test_apple_pay_card
@@ -597,6 +615,37 @@ class BraintreeBlueTest < Test::Unit::TestCase
     assert_equal "transaction_id", response.authorization
   end
 
+  def test_android_pay_card
+    Braintree::TransactionGateway.any_instance.expects(:sale).
+      with(
+        :amount => '1.00',
+        :order_id => '1',
+        :customer => {:id => nil, :email => nil, :first_name => 'Longbob', :last_name => 'Longsen'},
+        :options => {:store_in_vault => false, :submit_for_settlement => nil, :hold_in_escrow => nil},
+        :custom_fields => nil,
+        :android_pay_card => {
+          :number => '4111111111111111',
+          :expiration_month => '09',
+          :expiration_year => (Time.now.year + 1).to_s,
+          :cryptogram => '111111111100cryptogram',
+          :google_transaction_id => '1234567890'
+        }
+      ).
+      returns(braintree_result(:id => "transaction_id"))
+
+    credit_card = network_tokenization_credit_card('4111111111111111',
+      :brand              => 'visa',
+      :transaction_id     => "123",
+      :eci                => "05",
+      :payment_cryptogram => "111111111100cryptogram",
+      :source             => :android_pay,
+      :transaction_id     => '1234567890'
+    )
+
+    response = @gateway.authorize(100, credit_card, :test => true, :order_id => '1')
+    assert_equal "transaction_id", response.authorization
+  end
+
   def test_supports_network_tokenization
     assert_instance_of TrueClass, @gateway.supports_network_tokenization?
   end
@@ -606,6 +655,15 @@ class BraintreeBlueTest < Test::Unit::TestCase
     assert response = @gateway.purchase(100, credit_card("41111111111111111111"))
     refute response.success?
     assert response.authorization.present?
+  end
+
+  def test_unsuccessful_transaction_returns_message_when_available
+    Braintree::TransactionGateway.any_instance.
+      expects(:sale).
+      returns(braintree_error_result(message: 'Some error message'))
+    assert response = @gateway.purchase(100, credit_card("41111111111111111111"))
+    refute response.success?
+    assert_equal response.message, 'Some error message'
   end
 
   private

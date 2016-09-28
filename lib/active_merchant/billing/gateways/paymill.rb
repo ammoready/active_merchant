@@ -62,6 +62,16 @@ module ActiveMerchant #:nodoc:
           gsub(/(account.verification=)(\d*)/, '\1[FILTERED]')
       end
 
+      def verify_credentials
+        begin
+          ssl_get(live_url + "transactions/nonexistent", headers)
+        rescue ResponseError => e
+          return false if e.response.code.to_i == 401
+        end
+
+        true
+      end
+
       private
 
       def add_credit_card(post, credit_card)
@@ -154,7 +164,7 @@ module ActiveMerchant #:nodoc:
         begin
           raw_response = ssl_request(:get, "#{save_card_url}?#{post_data(post)}", nil, {})
         rescue ResponseError => e
-          return Response.new(false, e.response.body, e.response.body, {})
+          return Response.new(false, e.response.body)
         end
 
         response_for_save_from(raw_response)

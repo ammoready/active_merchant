@@ -1,14 +1,14 @@
 require 'nokogiri'
 
-module ActiveMerchant #:nodoc:
-  module Billing #:nodoc:
+module ActiveMerchant
+  module Billing
     class AuthorizeNetGateway < Gateway
       include Empty
 
       self.test_url = 'https://apitest.authorize.net/xml/v1/request.api'
       self.live_url = 'https://api2.authorize.net/xml/v1/request.api'
 
-      self.supported_countries = %w(AD AT AU BE BG CA CH CY CZ DE DK EE ES FI FR GB GB GI GR HU IE IS IT LI LT LU LV MC MT NL NO PL PT RO SE SI SK SM TR US VA)
+      self.supported_countries = %w(AD AT AU BE BG CA CH CY CZ DE DK EE ES FI FR GB GB GI GR HU IE IL IS IT LI LT LU LV MC MT NL NO PL PT RO SE SI SK SM TR US VA)
       self.default_currency = 'USD'
       self.money_format = :dollars
       self.supported_cardtypes = [:visa, :master, :american_express, :discover, :diners_club, :jcb, :maestro]
@@ -159,6 +159,11 @@ module ActiveMerchant #:nodoc:
         else
           create_customer_profile(credit_card, options)
         end
+      end
+
+      def verify_credentials
+        response = commit(:verify_credentials) { }
+        response.success?
       end
 
       def supports_scrubbing?
@@ -323,7 +328,7 @@ module ActiveMerchant #:nodoc:
 
       def add_settings(xml, source, options)
         xml.transactionSettings do
-          if !source.is_a?(String) && card_brand(source) == "check" && options[:recurring]
+          if options[:recurring]
             xml.setting do
               xml.settingName("recurringBilling")
               xml.settingValue("true")
@@ -359,7 +364,7 @@ module ActiveMerchant #:nodoc:
               xml.value(currency)
             end
           end
-          if application_id.present? && application_id != "ActiveMerchant"
+          if application_id.present?
             xml.userField do
               xml.name("x_solution_id")
               xml.value(application_id)
@@ -444,7 +449,7 @@ module ActiveMerchant #:nodoc:
           xml.bankAccount do
             xml.routingNumber(check.routing_number)
             xml.accountNumber(check.account_number)
-            xml.nameOnAccount(check.name)
+            xml.nameOnAccount(truncate(check.name, 22))
             xml.bankName(check.bank_name)
             xml.checkNumber(check.number)
           end
@@ -580,7 +585,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def parse(action, raw_response)
-        if is_cim_action?(action)
+        if is_cim_action?(action) || action == :verify_credentials
           parse_cim(raw_response)
         else
           parse_normal(action, raw_response)
@@ -628,6 +633,8 @@ module ActiveMerchant #:nodoc:
           "createCustomerProfileRequest"
         elsif action == :cim_store_update
           "createCustomerPaymentProfileRequest"
+        elsif action == :verify_credentials
+          "authenticateTestRequest"
         elsif is_cim_action?(action)
           "createCustomerProfileTransactionRequest"
         else
@@ -738,7 +745,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def success_from(action, response)
-        if action == :cim_store
+        if cim?(action) || (action == :verify_credentials)
           response[:result_code] == "Ok"
         else
           response[:response_code] == APPROVED && TRANSACTION_ALREADY_ACTIONED.exclude?(response[:response_reason_code])
@@ -758,7 +765,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def authorization_from(action, response)
-        if action == :cim_store
+        if cim?(action)
           [response[:customer_profile_id], response[:customer_payment_profile_id], action].join("#")
         else
           [response[:transaction_id], response[:account_number], action].join("#")
@@ -767,6 +774,10 @@ module ActiveMerchant #:nodoc:
 
       def split_authorization(authorization)
         authorization.split("#")
+      end
+
+      def cim?(action)
+        (action == :cim_store) || (action == :cim_store_update)
       end
 
       def transaction_id_from(authorization)

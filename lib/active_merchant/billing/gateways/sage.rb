@@ -90,7 +90,29 @@ module ActiveMerchant #:nodoc:
         vault.unstore(identification, options)
       end
 
+      def supports_scrubbing?
+        true
+      end
+
+      def scrub(transcript)
+         force_utf8(transcript).
+          gsub(%r((M_id=)[^&]*), '\1[FILTERED]').
+          gsub(%r((M_key=)[^&]*), '\1[FILTERED]').
+          gsub(%r((C_cardnumber=)[^&]*), '\1[FILTERED]').
+          gsub(%r((C_cvv=)[^&]*), '\1[FILTERED]').
+          gsub(%r((<ns1:CARDNUMBER>).+(</ns1:CARDNUMBER>)), '\1[FILTERED]\2').
+          gsub(%r((<ns1:M_ID>).+(</ns1:M_ID>)), '\1[FILTERED]\2').
+          gsub(%r((<ns1:M_KEY>).+(</ns1:M_KEY>)), '\1[FILTERED]\2')
+      end
+
       private
+
+      # use the same method as in pay_conex
+      def force_utf8(string)
+        return nil unless string
+        binary = string.encode("BINARY", invalid: :replace, undef: :replace, replace: "?")   # Needed for Ruby 2.0 since #encode is a no-op if the string is already UTF-8. It's not needed for Ruby 2.1 and up since it's not a no-op there.
+        binary.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+      end
 
       def add_credit_card(post, credit_card)
         post[:C_name]       = credit_card.name
@@ -204,13 +226,7 @@ module ActiveMerchant #:nodoc:
 
         post[:C_address]    = billing_address[:address1]
         post[:C_city]       = billing_address[:city]
-
-        if ['US', 'CA'].include?(billing_address[:country])
-          post[:C_state]    = billing_address[:state]
-        else
-          post[:C_state]    = "Outside of United States"
-        end
-
+        post[:C_state]      = billing_address[:state]
         post[:C_zip]        = billing_address[:zip]
         post[:C_country]    = billing_address[:country]
         post[:C_telephone]  = billing_address[:phone]

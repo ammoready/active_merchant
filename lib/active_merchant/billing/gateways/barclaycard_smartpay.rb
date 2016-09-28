@@ -62,6 +62,14 @@ module ActiveMerchant #:nodoc:
         commit('refund', post)
       end
 
+      def credit(money, creditcard, options = {})
+        post = payment_request(money, options)
+        post[:amount] = amount_hash(money, options[:currency])
+        post[:card] = credit_card_hash(creditcard)
+
+        commit('refundWithData', post)
+      end
+
       def void(identification, options = {})
         requires!(options, :order_id)
 
@@ -75,8 +83,6 @@ module ActiveMerchant #:nodoc:
       end
 
       def store(creditcard, options = {})
-        # ??? require :email and :customer, :order_id?
-
         post = store_request(options)
         post[:card] = credit_card_hash(creditcard)
         post[:recurring] = {:contract => 'RECURRING'}
@@ -97,6 +103,30 @@ module ActiveMerchant #:nodoc:
 
       private
 
+      # Smartpay may return AVS codes not covered by standard AVSResult codes.
+      # Smartpay's descriptions noted below.
+      AVS_MAPPING = {
+        '0'  => 'R',  # Unknown
+        '1'  => 'A',	# Address matches, postal code doesn't
+        '2'  => 'N',	# Neither postal code nor address match
+        '3'  => 'R',	# AVS unavailable
+        '4'  => 'E',	# AVS not supported for this card type
+        '5'  => 'U',	# No AVS data provided
+        '6'  => 'Z',	# Postal code matches, address doesn't match
+        '7'  => 'D',	# Both postal code and address match
+        '8'  => 'U',	# Address not checked, postal code unknown
+        '9'  => 'B',	# Address matches, postal code unknown
+        '10' => 'N',	# Address doesn't match, postal code unknown
+        '11' => 'U',	# Postal code not checked, address unknown
+        '12' => 'B',	# Address matches, postal code not checked
+        '13' => 'U',	# Address doesn't match, postal code not checked
+        '14' => 'P',	# Postal code matches, address unknown
+        '15' => 'P',	# Postal code matches, address not checked
+        '16' => 'N',	# Postal code doesn't match, address unknown
+        '17' => 'U',  # Postal code doesn't match, address not checked
+        '18' => 'I'	  # Neither postal code nor address were checked
+      }
+
       def commit(action, post)
         request = post_data(flatten_hash(post))
         raw_response = ssl_post(build_url(action), request, headers)
@@ -107,6 +137,7 @@ module ActiveMerchant #:nodoc:
           message_from(response),
           response,
           test: test?,
+          avs_result: AVSResult.new(:code => parse_avs_code(response)),
           authorization: response['recurringDetailReference'] || response['pspReference']
         )
 
@@ -114,6 +145,8 @@ module ActiveMerchant #:nodoc:
         case e.response.code
         when '401'
           return Response.new(false, 'Invalid credentials', {}, :test => test?)
+        when '403'
+          return Response.new(false, 'Not allowed', {}, :test => test?)
         when '422'
           return Response.new(false, 'Unprocessable Entity', {}, :test => test?)
         when '500'
@@ -122,6 +155,10 @@ module ActiveMerchant #:nodoc:
           end
         end
         raise
+      end
+
+      def parse_avs_code(response)
+        AVS_MAPPING[response["avsResult"][0..1].strip] if response["avsResult"]
       end
 
       def flatten_hash(hash, prefix = nil)
@@ -140,7 +177,7 @@ module ActiveMerchant #:nodoc:
       def headers
         {
           'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
-          'Authorization' => 'Basic ' + Base64.encode64("ws@Company.#{@options[:company]}:#{@options[:password]}").strip
+          'Authorization' => 'Basic ' + Base64.strict_encode64("ws@Company.#{@options[:company]}:#{@options[:password]}").strip
         }
       end
 
@@ -171,6 +208,7 @@ module ActiveMerchant #:nodoc:
       def success_from(response)
         return true if response.has_key?('authCode')
         return true if response['result'] == 'Success'
+        return true if response['resultCode'] == 'Received'
         successful_responses = %w([capture-received] [cancel-received] [refund-received])
         successful_responses.include?(response['response'])
       end
@@ -186,11 +224,13 @@ module ActiveMerchant #:nodoc:
 
       def address_hash(address)
         full_address = "#{address[:address1]} #{address[:address2]}" if address
+        street = address[:street] if address[:street]
+        house = address[:houseNumberOrName] if address[:houseNumberOrName]
 
         hash = {}
         hash[:city]              = address[:city] if address[:city]
-        hash[:street]            = full_address.split(/\s+/).keep_if { |x| x !~ /\d/ }.join(' ')
-        hash[:houseNumberOrName] = full_address.split(/\s+/).keep_if { |x| x =~ /\d/ }.join(' ')
+        hash[:street]            = street || full_address.split(/\s+/).keep_if { |x| x !~ /\d/ }.join(' ')
+        hash[:houseNumberOrName] = house || full_address.split(/\s+/).keep_if { |x| x =~ /\d/ }.join(' ')
         hash[:postalCode]        = address[:zip] if address[:zip]
         hash[:stateOrProvince]   = address[:state] if address[:state]
         hash[:country]           = address[:country] if address[:country]
