@@ -79,11 +79,16 @@ module ActiveMerchant
       end
 
       def purchase(amount, payment, options = {})
+        puts "\n-\n-\npurchase|PAYMENT: #{payment.inspect}\n-\n-\n"
+        puts "\n-\n-\npurchase|OPTIONS: #{options.inspect}\n-\n-\n"
+
         if payment.is_a?(String)
+          puts "\n-\n-\nCIM PURCHASE\n-\n-\n"
           commit(:cim_purchase) do |xml|
             add_cim_auth_purchase(xml, "profileTransAuthCapture", amount, payment, options)
           end
         else
+          puts "\n-\n-\nAUTH PURCHASE\n-\n-\n"
           commit(:purchase) do |xml|
             add_auth_purchase(xml, "authCaptureTransaction", amount, payment, options)
           end
@@ -314,6 +319,8 @@ module ActiveMerchant
       end
 
       def add_payment_source(xml, source)
+        puts "\n-\n-\nSOURCE: #{source.inspect}\n-\n-\n"
+        
         return unless source
         if source.is_a?(String)
           add_token_payment_method(xml, source)
@@ -374,6 +381,8 @@ module ActiveMerchant
       end
 
       def add_credit_card(xml, credit_card)
+        puts "\n-\n-\nCREDIT_CARD: #{credit_card.inspect}\n-\n-\n"
+        
         if credit_card.track_data
           add_swipe_data(xml, credit_card)
         else
