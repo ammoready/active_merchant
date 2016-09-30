@@ -205,6 +205,8 @@ module ActiveMerchant
       private
 
       def add_auth_purchase(xml, transaction_type, amount, payment, options)
+        puts "\n-\n-\nOPTIONS: #{options.inspect}\n-\n-\n"
+
         add_order_id(xml, options)
         xml.transactionRequest do
           xml.transactionType(transaction_type)
