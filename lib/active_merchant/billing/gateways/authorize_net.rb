@@ -208,7 +208,7 @@ module ActiveMerchant
       private
 
       def add_auth_purchase(xml, transaction_type, amount, payment, options)
-        puts "\n-\n-\nadd_auth_purchase|XML: #{xml}\n-\n-\n"
+        puts "\n-\n-\nadd_auth_purchase|XML: #{xml.inspect}\n-\n-\n"
         puts "\n-\n-\nadd_auth_purchase|TRANS_TYPE: #{transaction_type}\n-\n-\n"
 
         add_order_id(xml, options)
@@ -383,7 +383,7 @@ module ActiveMerchant
       end
 
       def add_credit_card(xml, credit_card)
-        puts "\n-\n-\nadd_credit_card|XML: #{xml}\n-\n-\n"
+        puts "\n-\n-\nadd_credit_card|XML: #{xml.inspect}\n-\n-\n"
         puts "\n-\n-\nadd_credit_card|CREDIT_CARD: #{credit_card.inspect}\n-\n-\n"
 
         if credit_card.track_data
