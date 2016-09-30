@@ -79,9 +79,6 @@ module ActiveMerchant
       end
 
       def purchase(amount, payment, options = {})
-        puts "\n-\n-\npurchase|PAYMENT: #{payment.inspect}\n-\n-\n"
-        puts "\n-\n-\npurchase|OPTIONS: #{options.inspect}\n-\n-\n"
-
         if payment.is_a?(String)
           commit(:cim_purchase) do |xml|
             add_cim_auth_purchase(xml, "profileTransAuthCapture", amount, payment, options)
@@ -208,9 +205,6 @@ module ActiveMerchant
       private
 
       def add_auth_purchase(xml, transaction_type, amount, payment, options)
-        puts "\n-\n-\nadd_auth_purchase|XML: #{xml.inspect}\n-\n-\n"
-        puts "\n-\n-\nadd_auth_purchase|TRANS_TYPE: #{transaction_type}\n-\n-\n"
-
         add_order_id(xml, options)
         xml.transactionRequest do
           xml.transactionType(transaction_type)
@@ -320,9 +314,6 @@ module ActiveMerchant
       end
 
       def add_payment_source(xml, source)
-        puts "\n-\n-\nadd_payment_source|XML: #{xml}\n-\n-\n"
-        puts "\n-\n-\nadd_payment_source|SOURCE: #{source.inspect}\n-\n-\n"
-
         return unless source
         if source.is_a?(String)
           add_token_payment_method(xml, source)
@@ -383,9 +374,6 @@ module ActiveMerchant
       end
 
       def add_credit_card(xml, credit_card)
-        puts "\n-\n-\nadd_credit_card|XML: #{xml.inspect}\n-\n-\n"
-        puts "\n-\n-\nadd_credit_card|CREDIT_CARD: #{credit_card.inspect}\n-\n-\n"
-
         if credit_card.track_data
           add_swipe_data(xml, credit_card)
         else
