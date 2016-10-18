@@ -116,8 +116,8 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_address(post, options)
-        billing_address  = options[:billing_address]  || options[:address]
-        shipping_address = options[:shipping_address] || options[:address]
+        billing_address  = options[:billing_address]  || options[:address] || {}
+        shipping_address = options[:shipping_address] || options[:address] || {}
 
         post[:address1] = billing_address[:address1] unless billing_address[:address1].nil?
         post[:address2] = billing_address[:address2] unless billing_address[:address2].nil?
