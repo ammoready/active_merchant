@@ -64,8 +64,7 @@ module ActiveMerchant #:nodoc:
         post = {}
         add_invoice(post, money, options)
         add_payment(post, payment)
-        add_billing_address(post, options)
-        add_shipping_address(post, options)
+        add_address(post, options)
         add_customer_data(post, payment, options)
 
         commit('sale', post)
@@ -116,24 +115,25 @@ module ActiveMerchant #:nodoc:
         post[:company] = options[:company] unless options[:company].nil?
       end
 
-      def add_billing_address(post, options)
-        post[:address1] = options[:address1] unless options[:address1].nil?
-        post[:address2] = options[:address2] unless options[:address2].nil?
-        post[:city] = options[:city] unless options[:city].nil?
-        post[:state] = options[:state] unless options[:state].nil?
-        post[:zip] = options[:zip] unless options[:zip].nil?
-        post[:phone] = options[:phone] unless options[:phone].nil?
-        post[:fax] = options[:fax] unless options[:fax].nil?
-        post[:email] = options[:email] unless options[:email].nil?
-      end
+      def add_address(post, options)
+        billing_address  = options[:billing_address]  || options[:address]
+        shipping_address = options[:shipping_address] || options[:address]
 
-      def add_shipping_address(post, options)
-        post[:shipping_address1] = options[:shipping_address1] unless options[:shipping_address1].nil?
-        post[:shipping_address2] = options[:shipping_address2] unless options[:shipping_address2].nil?
-        post[:shipping_city] = options[:shipping_city] unless options[:shipping_city].nil?
-        post[:shipping_state] = options[:shipping_state] unless options[:shipping_state].nil?
-        post[:shipping_zip] = options[:shipping_zip] unless options[:shipping_zip].nil?
-        post[:shipping_email] = options[:shipping_email] unless options[:shipping_email].nil?
+        post[:address1] = billing_address[:address1] unless billing_address[:address1].nil?
+        post[:address2] = billing_address[:address2] unless billing_address[:address2].nil?
+        post[:city] = billing_address[:city] unless billing_address[:city].nil?
+        post[:state] = billing_address[:state] unless billing_address[:state].nil?
+        post[:zip] = billing_address[:zip] unless billing_address[:zip].nil?
+        post[:phone] = billing_address[:phone] unless billing_address[:phone].nil?
+        post[:fax] = billing_address[:fax] unless billing_address[:fax].nil?
+        post[:email] = billing_address[:email] unless billing_address[:email].nil?
+
+        post[:shipping_address1] = shipping_address[:shipping_address1] unless shipping_address[:shipping_address1].nil?
+        post[:shipping_address2] = shipping_address[:shipping_address2] unless shipping_address[:shipping_address2].nil?
+        post[:shipping_city] = shipping_address[:shipping_city] unless shipping_address[:shipping_city].nil?
+        post[:shipping_state] = shipping_address[:shipping_state] unless shipping_address[:shipping_state].nil?
+        post[:shipping_zip] = shipping_address[:shipping_zip] unless shipping_address[:shipping_zip].nil?
+        post[:shipping_email] = shipping_address[:shipping_email] unless shipping_address[:shipping_email].nil?
       end
 
       def add_invoice(post, money, options)
