@@ -28,16 +28,12 @@ module ActiveMerchant #:nodoc:
       end
 
       def purchase(money, options = {})
-        ::Rails.logger.info "-- DEBUG: #{self.class}#purchase(#{money.inspect}, #{options.inspect})" if defined?(::Rails)
-
         post = {}
 
         add_invoice(post, money, options)
         add_payment(post, options)
         add_address(post, options)
         add_customer_data(post, options)
-
-        ::Rails.logger.info "-- DEBUG: #{self.class}#purchase: post: #{post.inspect}" if defined?(::Rails)
 
         commit(:Sale, post)
       end
@@ -120,16 +116,12 @@ module ActiveMerchant #:nodoc:
       private
 
       def add_customer_data(post, options)
-        ::Rails.logger.info "-- DEBUG: #{self.class}#add_customer_data(#{post.inspect}, #{options.inspect})" if defined?(::Rails)
-
         post[:FirstName] = options[:first_name] unless options[:first_name].nil?
         post[:LastName] = options[:last_name] unless options[:last_name].nil?
         post[:Company] = options[:company] unless options[:company].nil?
       end
 
       def add_address(post, options)
-        ::Rails.logger.info "-- DEBUG: #{self.class}#add_address(#{post.inspect}, #{options.inspect})" if defined?(::Rails)
-
         return unless options.has_key?(:address)
         address = options[:address]
 
@@ -141,15 +133,11 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_invoice(post, money, options)
-        ::Rails.logger.info "-- DEBUG: #{self.class}#add_invoice(#{post.inspect}, #{money.inspect}, #{options.inspect})" if defined?(::Rails)
-
         post[:Total] = amount(money)
         post[:Description] = options[:description] unless options[:description].nil?
       end
 
       def add_payment(post, options)
-        ::Rails.logger.info "-- DEBUG: #{self.class}#add_payment(#{post.inspect}, #{options.inspect})" if defined?(::Rails)
-
         if options.has_key?(:transaction_id)
           # Use TransID as payment
           post[:TransID] = options[:transaction_id]
@@ -190,14 +178,11 @@ module ActiveMerchant #:nodoc:
       # * <tt>action</tt> - Should be the 'TranType' value for the request body.
       # * <tt>parameters</tt> - Data (hash) to be POSTed as the request body.
       def commit(action, parameters)
-        ::Rails.logger.info "-- DEBUG: #{self.class}#commit(#{action.inspect}, #{parameters.inspect})" if defined?(::Rails)
-
         parameters[:HTML] = 'No'
 
         url = (test? ? test_url : live_url)
 
         response = parse(ssl_post(url, post_data(action, parameters)))
-        ::Rails.logger.info "-- DEBUG: #{self.class}#commit: response: #{response.inspect}" if defined?(::Rails)
 
         Response.new(
           success_from(response),
