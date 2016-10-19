@@ -85,6 +85,10 @@ module ActiveMerchant #:nodoc:
       end
 
       def refund(money, authorization, options={})
+        post = {}
+        post[:amount] = amount(money)
+        post[:transactionid] = authorization
+
         commit('refund', post)
       end
 
