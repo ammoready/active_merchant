@@ -74,10 +74,10 @@ module ActiveMerchant #:nodoc:
         post = {}
         add_invoice(post, money, options)
         add_payment(post, payment)
-        add_address(post, payment, options)
-        add_customer_data(post, options)
+        add_address(post, options)
+        add_customer_data(post, payment, options)
 
-        commit('authonly', post)
+        commit('auth', post)
       end
 
       def capture(money, authorization, options={})
