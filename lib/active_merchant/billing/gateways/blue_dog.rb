@@ -179,8 +179,8 @@ module ActiveMerchant #:nodoc:
         response[:response_code] = parsed_body[:response_code].to_i
         response[:avs_response] = parsed_body[:avsresponse]
         response[:cvv_response] = parsed_body[:cvvresponse]
-        response[:transaction_id] = parsed_body[:transactionid]
-        response[:authorization] = parsed_body[:authcode]
+        response[:authorization] = parsed_body[:transactionid]
+        response[:auth_code] = parsed_body[:authcode]
 
         response
       end
