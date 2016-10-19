@@ -81,6 +81,10 @@ module ActiveMerchant #:nodoc:
       end
 
       def capture(money, authorization, options={})
+        post = {}
+        post[:amount] = amount(money)
+        post[:transactionid] = authorization
+
         commit('capture', post)
       end
 
@@ -93,6 +97,9 @@ module ActiveMerchant #:nodoc:
       end
 
       def void(authorization, options={})
+        post = {}
+        post[:transactionid] = authorization
+
         commit('void', post)
       end
 
