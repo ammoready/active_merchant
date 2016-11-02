@@ -130,6 +130,9 @@ module ActiveMerchant #:nodoc:
         billing_address  = options[:billing_address]  || options[:address] || {}
         shipping_address = options[:shipping_address] || options[:address] || {}
 
+        billing_email = options[:email] ? options[:email] : (billing_address[:email] ? billing_address[:email] : nil)
+        shipping_email = shipping_address[:email] ? shipping_address[:email] : billing_email
+
         post[:address1] = billing_address[:address1] unless billing_address[:address1].nil?
         post[:address2] = billing_address[:address2] unless billing_address[:address2].nil?
         post[:city] = billing_address[:city] unless billing_address[:city].nil?
@@ -137,7 +140,7 @@ module ActiveMerchant #:nodoc:
         post[:zip] = billing_address[:zip] unless billing_address[:zip].nil?
         post[:phone] = billing_address[:phone] unless billing_address[:phone].nil?
         post[:fax] = billing_address[:fax] unless billing_address[:fax].nil?
-        post[:email] = billing_address[:email] unless billing_address[:email].nil?
+        post[:email] = billing_email unless billing_email.nil?
 
         post[:shipping_address1] = shipping_address[:address1] unless shipping_address[:address1].nil?
         post[:shipping_address2] = shipping_address[:address2] unless shipping_address[:address2].nil?
