@@ -81,6 +81,11 @@ blue_dog:
   login: demo
   password: password
 
+# Working credentials, no need to replace
+blue_dog_customer_vault:
+  some_credential: demo
+  another_credential: password
+
 blue_pay:
   login: '100096218902'
   password: 'MBUVE4G1BACMFM4W3XQHUUL2SMQRP.LW'
