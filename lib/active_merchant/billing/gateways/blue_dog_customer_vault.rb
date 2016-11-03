@@ -41,6 +41,15 @@ module ActiveMerchant #:nodoc:
         commit(post)
       end
 
+      def delete_customer(customer_vault_id)
+        post = {
+          customer_vault: 'delete_customer',
+          customer_vault_id: customer_vault_id
+        }
+
+        commit(post)
+      end
+
       def purchase(money, payment, options={})
       end
 
