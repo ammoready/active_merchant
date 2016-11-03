@@ -28,6 +28,19 @@ module ActiveMerchant #:nodoc:
         commit(post)
       end
 
+      def update_customer(customer_vault_id, payment, options={})
+        post = {
+          customer_vault: 'update_customer',
+          customer_vault_id: customer_vault_id
+        }
+
+        add_payment(post, payment)
+        add_address(post, options)
+        add_customer_data(post, payment, options)
+
+        commit(post)
+      end
+
       def purchase(money, payment, options={})
       end
 
