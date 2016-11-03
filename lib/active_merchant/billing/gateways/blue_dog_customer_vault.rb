@@ -84,7 +84,13 @@ module ActiveMerchant #:nodoc:
         commit(post)
       end
 
-      def void(authorization, options={})
+      def void(authorization, customer_vault_id, options={})
+        post = {
+          type: 'void',
+          transactionid: authorization,
+          customer_vault_id: customer_vault_id
+        }
+        commit(post)
       end
 
       def supports_scrubbing?
