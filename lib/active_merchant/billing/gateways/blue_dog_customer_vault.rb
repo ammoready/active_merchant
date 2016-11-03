@@ -64,7 +64,14 @@ module ActiveMerchant #:nodoc:
         commit(post)
       end
 
-      def capture(money, authorization, options={})
+      def capture(money, authorization, customer_vault_id, options={})
+        post = {
+          type: 'capture',
+          amount: amount(money),
+          transactionid: authorization,
+          customer_vault_id: customer_vault_id
+        }
+        commit(post)
       end
 
       def refund(money, authorization, options={})
