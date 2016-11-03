@@ -74,7 +74,14 @@ module ActiveMerchant #:nodoc:
         commit(post)
       end
 
-      def refund(money, authorization, options={})
+      def refund(money, authorization, customer_vault_id, options={})
+        post = {
+          type: 'refund',
+          amount: amount(money),
+          transactionid: authorization,
+          customer_vault_id: customer_vault_id
+        }
+        commit(post)
       end
 
       def void(authorization, options={})
