@@ -57,7 +57,11 @@ module ActiveMerchant #:nodoc:
         commit(post)
       end
 
-      def authorize(money, payment, options={})
+      def authorize(money, customer_vault_id, options={})
+        post = { type: 'auth', customer_vault_id: customer_vault_id }
+
+        add_invoice(post, money, options)
+        commit(post)
       end
 
       def capture(money, authorization, options={})
