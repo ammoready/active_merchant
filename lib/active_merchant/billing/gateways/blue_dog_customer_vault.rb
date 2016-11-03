@@ -50,7 +50,11 @@ module ActiveMerchant #:nodoc:
         commit(post)
       end
 
-      def purchase(money, payment, options={})
+      def purchase(money, customer_vault_id, options={})
+        post = { type: 'sale', customer_vault_id: customer_vault_id }
+
+        add_invoice(post, money, options)
+        commit(post)
       end
 
       def authorize(money, payment, options={})
@@ -108,6 +112,12 @@ module ActiveMerchant #:nodoc:
       def add_invoice(post, money, options)
         post[:amount] = amount(money)
         post[:currency] = (options[:currency] || currency(money))
+        post[:tax] = ("%.2f" % options[:tax]) unless options[:tax].nil?
+        post[:shipping] = ("%.2f" % options[:shipping]) unless options[:shipping].nil?
+
+        post[:orderid] = options[:order_id] unless options[:order_id].nil?
+        post[:orderdescription] = options[:order_description] unless options[:order_description].nil?
+        post[:ponumber] = options[:po_number] unless options[:po_number].nil?
       end
 
       def add_payment(post, payment)
