@@ -4,8 +4,9 @@ module ActiveMerchant #:nodoc:
       self.test_url = 'https://pal-test.barclaycardsmartpay.com/pal/servlet'
       self.live_url = 'https://pal-live.barclaycardsmartpay.com/pal/servlet'
 
-      self.supported_countries = ['AR', 'AT', 'BE', 'BR', 'CA', 'CH', 'CL', 'CN', 'CO', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'HK', 'ID', 'IE', 'IL', 'IN', 'IT', 'JP', 'KR', 'LU', 'MX', 'MY', 'NL', 'NO', 'PA', 'PE', 'PH', 'PL', 'PT', 'RU', 'SE', 'SG', 'TH', 'TR', 'TW', 'US', 'VN', 'ZA']
+      self.supported_countries = ['AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'GE', 'DE', 'GR', 'HU', 'IS', 'IE', 'IT', 'KZ', 'LV', 'LI', 'LT', 'LU', 'MK', 'MT', 'MD', 'MC', 'ME', 'NL', 'NO', 'PL', 'PT', 'RO', 'RU', 'SM', 'RS', 'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA']
       self.default_currency = 'EUR'
+      self.currencies_with_three_decimal_places = %w(BHD KWD OMR RSD TND)
       self.money_format = :cents
       self.supported_cardtypes = [:visa, :master, :american_express, :discover, :diners_club, :jcb, :dankort, :maestro]
 
@@ -238,9 +239,10 @@ module ActiveMerchant #:nodoc:
       end
 
       def amount_hash(money, currency)
+        currency = currency || currency(money)
         hash = {}
-        hash[:currency] = currency || currency(money)
-        hash[:value]    = amount(money) if money
+        hash[:currency] = currency
+        hash[:value]    = localized_amount(money, currency) if money
         hash
       end
 
