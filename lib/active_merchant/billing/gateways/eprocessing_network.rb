@@ -27,6 +27,7 @@ module ActiveMerchant #:nodoc:
         super
       end
 
+      # TODO: add `payment` argument like other processors
       def purchase(money, options = {})
         post = {}
 
