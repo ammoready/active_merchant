@@ -156,7 +156,7 @@ module ActiveMerchant #:nodoc:
         post[:shipping] = ("%.2f" % options[:shipping]) unless options[:shipping].nil?
 
         post[:orderid] = options[:order_id] unless options[:order_id].nil?
-        post[:orderdescription] = options[:order_description] unless options[:order_description].nil?
+        post[:orderdescription] = options[:description] unless options[:description].nil?
         post[:ponumber] = options[:po_number] unless options[:po_number].nil?
       end
 
