@@ -173,6 +173,10 @@ module ActiveMerchant #:nodoc:
         TRANSACTION_URLS[action] % [root_url, transaction_id]
       end
 
+      def expdate(credit_card)
+        "#{format(credit_card.month, :two_digits)}/#{format(credit_card.year, :two_digits)}"
+      end
+
       def success_from(response)
         response[:status] == 'success'
       end
