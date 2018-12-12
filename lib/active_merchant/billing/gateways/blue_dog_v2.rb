@@ -135,7 +135,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_payment(post, payment)
-        post[:payment_method][:card][:entry_type]      'keyed'
+        post[:payment_method][:card][:entry_type]      = 'keyed'
         post[:payment_method][:card][:number]          = payment.number
         post[:payment_method][:card][:expiration_date] = expdate(payment)
         post[:payment_method][:card][:cvc]             = payment.verification_value
