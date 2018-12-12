@@ -27,21 +27,21 @@ module ActiveMerchant #:nodoc:
         super
       end
 
-      def purchase(money, payment, options = {})
+      def purchase(money, credit_card, options = {})
         post = {}
         add_invoice(post, money, options)
-        add_payment(post, payment)
-        add_customer_data(post, payment, options)
+        add_payment(post, credit_card)
+        add_customer_data(post, credit_card, options)
         add_address(post, options)
 
         commit(:sale, post)
       end
 
-      def authorize(money, payment, options = {})
+      def authorize(money, credit_card, options = {})
         post = {}
         add_invoice(post, money, options)
-        add_payment(post, payment)
-        add_customer_data(post, payment, options)
+        add_payment(post, credit_card)
+        add_customer_data(post, credit_card, options)
         add_address(post, options)
 
         commit(:authorize, post)
@@ -84,11 +84,11 @@ module ActiveMerchant #:nodoc:
 
       private
 
-      def add_customer_data(post, creditcard, options)
+      def add_customer_data(post, credit_card, options)
         post[:billing_address] = {}
 
-        post[:billing_address][:first_name] = creditcard.first_name
-        post[:billing_address][:last_name]  = creditcard.last_name
+        post[:billing_address][:first_name] = credit_card.first_name
+        post[:billing_address][:last_name]  = credit_card.last_name
         post[:billing_address][:email]      = options[:email]
       end
 
@@ -137,13 +137,13 @@ module ActiveMerchant #:nodoc:
         post[:email_address]   = options[:email] if post[:email_receipt]
       end
 
-      def add_payment(post, payment)
+      def add_payment(post, credit_card)
         post[:payment_method] = {
           card: {
             entry_type:      'keyed',
-            number:          payment.number,
-            expiration_date: expdate(payment),
-            cvc:             payment.verification_value,
+            number:          credit_card.number,
+            expiration_date: expdate(credit_card),
+            cvc:             credit_card.verification_value,
           }
         }
       end
