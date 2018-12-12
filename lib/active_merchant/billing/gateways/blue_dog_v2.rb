@@ -182,23 +182,23 @@ module ActiveMerchant #:nodoc:
       end
 
       def message_from(response)
-        response[:data][:response]
+        response[:data][:response] unless response[:data].nil?
       end
 
       def authorization_from(response)
-        response[:data][:id]
+        response[:data][:id] unless response[:data].nil?
       end
 
       def avs_result_from(response)
-        AVSResult.new(code: response[:data][:response_body][:card][:avs_response_code])
+        AVSResult.new(code: response[:data][:response_body][:card][:avs_response_code]) unless response[:data].nil?
       end
 
       def cvv_result_from(response)
-        CVVResult.new(response[:data][:response_body][:card][:cvv_response_code])
+        CVVResult.new(response[:data][:response_body][:card][:cvv_response_code]) unless response[:data].nil?
       end
 
       def error_code_from(response)
-        response[:data][:response_code] unless success_from(response)
+        response[:data][:response_code] unless success_from(response) || response[:data].nil?
       end
 
       def post_data(action, parameters)
