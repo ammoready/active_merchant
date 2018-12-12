@@ -49,7 +49,7 @@ module ActiveMerchant #:nodoc:
 
       def capture(money, transaction_id, options = {})
         post                   = {}
-        post[:amount]          = amount(money)
+        post[:amount]          = money
         post[:tax_amount]      = options[:tax_amount] unless options[:tax_amount].nil?
         post[:tax_exempt]      = options[:tax_exempt] || false
         post[:shipping_amount] = options[:shipping_amount] unless options[:shipping_amount].nil?
@@ -125,9 +125,9 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_invoice(post, money, options)
-        post[:amount]          = amount(money)
-        post[:tax_amount]      = amount(options[:tax]) unless options[:tax].nil?
-        post[:shipping_amount] = amount(options[:shipping]) unless options[:shipping].nil?
+        post[:amount]          = money
+        post[:tax_amount]      = options[:tax] unless options[:tax].nil?
+        post[:shipping_amount] = options[:shipping] unless options[:shipping].nil?
         post[:currency]        = options[:currency] || 'USD'
         post[:description]     = options[:description] unless options[:description].nil?
         post[:order_id]        = options[:order_id] unless options[:order_id].nil?
