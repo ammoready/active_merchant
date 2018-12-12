@@ -7,6 +7,7 @@ module ActiveMerchant #:nodoc:
       self.supported_countries = ['US']
       self.default_currency = 'USD'
       self.supported_cardtypes = [:visa, :master, :american_express, :discover]
+      self.money_format = :cents
 
       self.homepage_url = 'http://blue-dog.com/'
       self.display_name = 'Blue Dog 2.0'
@@ -125,8 +126,8 @@ module ActiveMerchant #:nodoc:
 
       def add_invoice(post, money, options)
         post[:amount]          = amount(money)
-        post[:tax_amount]      = ("%.2f" % options[:tax]) unless options[:tax].nil?
-        post[:shipping_amount] = ("%.2f" % options[:shipping]) unless options[:shipping].nil?
+        post[:tax_amount]      = amount(options[:tax]) unless options[:tax].nil?
+        post[:shipping_amount] = amount(options[:shipping]) unless options[:shipping].nil?
         post[:currency]        = options[:currency] || 'USD'
         post[:description]     = options[:description] unless options[:description].nil?
         post[:order_id]        = options[:order_id] unless options[:order_id].nil?
