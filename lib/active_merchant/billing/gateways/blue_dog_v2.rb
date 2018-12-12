@@ -30,8 +30,8 @@ module ActiveMerchant #:nodoc:
         post = {}
         add_invoice(post, money, options)
         add_payment(post, payment)
-        add_address(post, options)
         add_customer_data(post, payment, options)
+        add_address(post, options)
 
         commit(:sale, post)
       end
@@ -40,8 +40,8 @@ module ActiveMerchant #:nodoc:
         post = {}
         add_invoice(post, money, options)
         add_payment(post, payment)
-        add_address(post, options)
         add_customer_data(post, payment, options)
+        add_address(post, options)
 
         commit(:authorize, post)
       end
@@ -84,6 +84,8 @@ module ActiveMerchant #:nodoc:
       private
 
       def add_customer_data(post, creditcard, options)
+        post[:billing_address] = {}
+
         post[:billing_address][:first_name] = creditcard.first_name
         post[:billing_address][:last_name]  = creditcard.last_name
         post[:billing_address][:email]      = options[:email]
@@ -92,6 +94,7 @@ module ActiveMerchant #:nodoc:
       def add_address(post, options)
         billing_address  = options[:billing_address]  || options[:address] || {}
         shipping_address = options[:shipping_address] || options[:address] || {}
+        post[:shipping_address] = {}
 
         post[:billing_address][:first_name]     ||= billing_address[:first_name]
         post[:billing_address][:last_name]      ||= billing_address[:last_name]
@@ -135,10 +138,14 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_payment(post, payment)
-        post[:payment_method][:card][:entry_type]      = 'keyed'
-        post[:payment_method][:card][:number]          = payment.number
-        post[:payment_method][:card][:expiration_date] = expdate(payment)
-        post[:payment_method][:card][:cvc]             = payment.verification_value
+        post[:payment_method] = {
+          card: {
+            entry_type:      'keyed',
+            number:          payment.number,
+            expiration_date: expdate(payment),
+            cvc:             payment.verification_value,
+          }
+        }
       end
 
       def parse(body)
