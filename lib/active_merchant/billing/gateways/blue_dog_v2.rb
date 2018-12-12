@@ -169,7 +169,7 @@ module ActiveMerchant #:nodoc:
       def transaction_url(action, transaction_id)
         root_url = (test? ? test_url : live_url)
 
-        TRANSACTION_URLS[action] & [root_url, transaction_id]
+        TRANSACTION_URLS[action] % [root_url, transaction_id]
       end
 
       def success_from(response)
