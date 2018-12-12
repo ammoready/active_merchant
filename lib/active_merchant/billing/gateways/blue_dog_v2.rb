@@ -1,8 +1,8 @@
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class BlueDogV2Gateway < Gateway
-      self.test_url = 'https://sandbox.bluedogpayments.com'
-      self.live_url = 'https://app.bluedogpayments.com'
+      self.test_url = 'https://sandbox.bluedogpayments.com/api'
+      self.live_url = 'https://app.bluedogpayments.com/api'
 
       self.supported_countries = ['US']
       self.default_currency = 'USD'
