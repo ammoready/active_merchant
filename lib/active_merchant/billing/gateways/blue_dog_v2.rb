@@ -124,7 +124,6 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_invoice(post, money, options)
-        post[:type]            = options[:type] || 'sale'
         post[:amount]          = amount(money)
         post[:tax_amount]      = ("%.2f" % options[:tax]) unless options[:tax].nil?
         post[:shipping_amount] = ("%.2f" % options[:shipping]) unless options[:shipping].nil?
