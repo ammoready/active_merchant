@@ -62,7 +62,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def refund(money, transaction_id)
-        post = { amount: amount(money) }
+        post = { amount: money }
 
         commit(:refund, post, transaction_id)
       end
