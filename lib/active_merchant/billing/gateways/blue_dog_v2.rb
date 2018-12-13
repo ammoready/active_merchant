@@ -178,7 +178,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def success_from(response)
-        response[:status] == 'success'
+        (response[:data].try(:[], :status) || response[:status]) == 'success'
       end
 
       def message_from(response)
