@@ -178,7 +178,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def success_from(response)
-        %w( success approved ).include?((response[:status] || response[:data].try(:[], :status)).downcase)
+        %w( success approved ).include?((response[:data].try(:[], :status) || response[:status]).downcase)
       end
 
       def message_from(response)
