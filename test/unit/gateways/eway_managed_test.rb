@@ -4,32 +4,33 @@ class EwayManagedTest < Test::Unit::TestCase
   def setup
     Base.mode = :test
 
-    @gateway = EwayManagedGateway.new(:username => 'username', :login => 'login', :password => 'password')
+    @gateway = EwayManagedGateway.new(username: 'username', login: 'login', password: 'password')
 
-    @valid_card='4444333322221111'
-    @valid_customer_id='9876543211000'
+    @valid_card = '4444333322221111'
+    @valid_customer_id = '9876543211000'
 
     @credit_card = credit_card(@valid_card)
     @declined_card = credit_card('4444111111111111')
 
     @amount = 100
 
-    @options = { :billing_address => {
-                  :address1 => '1234 My Street',
-                  :address2 => 'Apt 1',
-                  :company => 'Widgets Inc',
-                  :city => 'Ottawa',
-                  :state => 'ON',
-                  :zip => 'K1C2N6',
-                  :country => 'au',
-                  :title => 'Mr.',
-                  :phone => '(555)555-5555'
-               },
-               :email => 'someguy1232@fakeemail.net',
-               :order_id => '1000',
-               :customer => 'mycustomerref',
-               :description => 'My Description',
-               :invoice => 'invoice-4567'
+    @options = {
+      billing_address: {
+        address1: '1234 My Street',
+        address2: 'Apt 1',
+        company: 'Widgets Inc',
+        city: 'Ottawa',
+        state: 'ON',
+        zip: 'K1C2N6',
+        country: 'au',
+        title: 'Mr.',
+        phone: '(555)555-5555'
+      },
+      email: 'someguy1232@fakeemail.net',
+      order_id: '1000',
+      customer: 'mycustomerref',
+      description: 'My Description',
+      invoice: 'invoice-4567'
     }
   end
 
@@ -38,17 +39,17 @@ class EwayManagedTest < Test::Unit::TestCase
       @gateway.store(@credit_card, { })
     end
     assert_raise ArgumentError do
-      @gateway.store(@credit_card, { :billing_address => {} })
+      @gateway.store(@credit_card, { billing_address: {} })
     end
     assert_raise ArgumentError do
-      @gateway.store(@credit_card, { :billing_address => { :title => 'Mr.' } })
+      @gateway.store(@credit_card, { billing_address: { title: 'Mr.' } })
     end
     assert_raise ArgumentError do
-      @gateway.store(@credit_card, { :billing_address => { :country => 'au' } })
+      @gateway.store(@credit_card, { billing_address: { country: 'au' } })
     end
     assert_nothing_raised do
       @gateway.expects(:ssl_post).returns(successful_store_response)
-      @gateway.store(@credit_card, { :billing_address => { :title => 'Mr.', :country => 'au' } })
+      @gateway.store(@credit_card, { billing_address: { title: 'Mr.', country: 'au' } })
     end
   end
 
@@ -57,17 +58,17 @@ class EwayManagedTest < Test::Unit::TestCase
       @gateway.update(@valid_customer_id, @credit_card, { })
     end
     assert_raise ArgumentError do
-      @gateway.update(@valid_customer_id, @credit_card, { :billing_address => {} })
+      @gateway.update(@valid_customer_id, @credit_card, { billing_address: {} })
     end
     assert_raise ArgumentError do
-      @gateway.update(@valid_customer_id, @credit_card, { :billing_address => { :title => 'Mr.' } })
+      @gateway.update(@valid_customer_id, @credit_card, { billing_address: { title: 'Mr.' } })
     end
     assert_raise ArgumentError do
-      @gateway.update(@valid_customer_id, @credit_card, { :billing_address => { :country => 'au' } })
+      @gateway.update(@valid_customer_id, @credit_card, { billing_address: { country: 'au' } })
     end
     assert_nothing_raised do
       @gateway.expects(:ssl_post).returns(successful_update_response)
-      @gateway.update(@valid_customer_id, @credit_card, { :billing_address => { :title => 'Mr.', :country => 'au' } })
+      @gateway.update(@valid_customer_id, @credit_card, { billing_address: { title: 'Mr.', country: 'au' } })
     end
   end
 
@@ -76,10 +77,10 @@ class EwayManagedTest < Test::Unit::TestCase
 
     assert response = @gateway.purchase(@amount, @valid_customer_id, @options)
     assert_instance_of EwayManagedGateway::EwayResponse, response
-    assert_equal "00,Transaction Approved(Test Gateway)", response.message
+    assert_equal '00,Transaction Approved(Test Gateway)', response.message
     assert_success response
-    assert_equal "123456", response.authorization
-    assert_equal "123456", response.params['transaction_number']
+    assert_equal '123456', response.authorization
+    assert_equal '123456', response.params['transaction_number']
     assert response.test?
   end
 
@@ -125,7 +126,6 @@ class EwayManagedTest < Test::Unit::TestCase
       request_hash['Envelope']['Body']['ProcessPayment']['invoiceReference'] == 'order_id'
     }.returns(successful_purchase_response)
     @gateway.purchase(@amount, @valid_customer_id, options)
-
   end
 
   def test_invalid_customer_id
@@ -141,9 +141,9 @@ class EwayManagedTest < Test::Unit::TestCase
 
     assert response = @gateway.store(@credit_card, @options)
     assert_instance_of EwayManagedGateway::EwayResponse, response
-    assert_equal "OK", response.message
+    assert_equal 'OK', response.message
     assert_success response
-    assert_equal "1234567", response.token
+    assert_equal '1234567', response.token
     assert response.test?
   end
 
@@ -230,7 +230,7 @@ class EwayManagedTest < Test::Unit::TestCase
 
     assert response = @gateway.store(@credit_card, @options)
     assert_instance_of EwayManagedGateway::EwayResponse, response
-    assert_equal "OK", response.message
+    assert_equal 'OK', response.message
     assert_success response
     assert response.test?
   end
@@ -240,7 +240,7 @@ class EwayManagedTest < Test::Unit::TestCase
 
     assert response = @gateway.retrieve(@valid_customer_id)
     assert_instance_of EwayManagedGateway::EwayResponse, response
-    assert_equal "OK", response.message
+    assert_equal 'OK', response.message
     assert_success response
     assert response.test?
   end
@@ -372,9 +372,9 @@ class EwayManagedTest < Test::Unit::TestCase
     XML
   end
 
-    # Documented here: https://www.eway.com.au/gateway/ManagedPaymentService/managedCreditCardPayment.asmx?op=CreateCustomer
-    def expected_purchase_request
-      <<-XML
+  # Documented here: https://www.eway.com.au/gateway/ManagedPaymentService/managedCreditCardPayment.asmx?op=CreateCustomer
+  def expected_purchase_request
+    <<-XML
 <?xml version="1.0" encoding="utf-8"?>
 <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
   <soap12:Header>
@@ -393,10 +393,10 @@ class EwayManagedTest < Test::Unit::TestCase
     </ProcessPayment>
   </soap12:Body>
 </soap12:Envelope>
-      XML
-    end
+    XML
+  end
 
-    # Documented here: https://www.eway.com.au/gateway/ManagedPaymentService/managedCreditCardPayment.asmx?op=QueryCustomer
+  # Documented here: https://www.eway.com.au/gateway/ManagedPaymentService/managedCreditCardPayment.asmx?op=QueryCustomer
   def expected_retrieve_request
     <<-XML
   <?xml version="1.0" encoding="utf-8"?>
@@ -416,5 +416,4 @@ class EwayManagedTest < Test::Unit::TestCase
   </soap12:Envelope>
     XML
   end
-
 end

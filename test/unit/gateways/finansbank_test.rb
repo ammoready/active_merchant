@@ -1,27 +1,24 @@
 # encoding: utf-8
+
 require 'test_helper'
 
 class FinansbankTest < Test::Unit::TestCase
   def setup
     @original_kcode = nil
-    if RUBY_VERSION < '1.9' && $KCODE == "NONE"
-      @original_kcode = $KCODE
-      $KCODE = 'u'
-    end
 
     @gateway = FinansbankGateway.new(
-      :login => 'login',
-      :password => 'password',
-      :client_id => 'client_id'
+      login: 'login',
+      password: 'password',
+      client_id: 'client_id'
     )
 
     @credit_card = credit_card
     @amount = 100
 
     @options = {
-      :order_id => '1',
-      :billing_address => address,
-      :description => 'Store Purchase'
+      order_id: '1',
+      billing_address: address,
+      description: 'Store Purchase'
     }
   end
 
@@ -238,7 +235,7 @@ class FinansbankTest < Test::Unit::TestCase
     <NUMCODE>00</NUMCODE>
     </Extra>
 </CC5Response>
-  EOF
+    EOF
   end
 
   def failed_void_response

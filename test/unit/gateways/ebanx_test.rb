@@ -28,7 +28,7 @@ class EbanxTest < Test::Unit::TestCase
 
     response = @gateway.purchase(@amount, @credit_card, @options)
     assert_failure response
-    assert_equal "NOK", response.error_code
+    assert_equal 'NOK', response.error_code
   end
 
   def test_successful_authorize
@@ -46,31 +46,40 @@ class EbanxTest < Test::Unit::TestCase
 
     response = @gateway.purchase(@amount, @credit_card, @options)
     assert_failure response
-    assert_equal "NOK", response.error_code
+    assert_equal 'NOK', response.error_code
   end
 
   def test_successful_capture
     @gateway.expects(:ssl_request).returns(successful_capture_response)
 
-    response = @gateway.capture(@amount, "authorization", @options)
+    response = @gateway.capture(@amount, 'authorization', @options)
     assert_success response
-
-    assert_equal 'Sandbox - Test credit card, transaction captured', response.message
+    assert_equal '5dee94502bd59660b801c441ad5a703f2c4123f5fc892ccb', response.authorization
+    assert_equal 'Accepted', response.message
     assert response.test?
+  end
+
+  def test_failed_partial_capture
+    @gateway.expects(:ssl_request).returns(failed_partial_capture_response)
+
+    response = @gateway.capture(@amount, 'authorization', @options.merge(include_capture_amount: true))
+    assert_failure response
+    assert_equal 'BP-CAP-11', response.error_code
+    assert_equal 'Partial capture not available', response.message
   end
 
   def test_failed_capture
     @gateway.expects(:ssl_request).returns(failed_capture_response)
 
-    response = @gateway.capture(@amount, "", @options)
+    response = @gateway.capture(@amount, '', @options)
     assert_failure response
-    assert_equal "BP-CAP-1", response.error_code
+    assert_equal 'BP-CAP-1', response.error_code
   end
 
   def test_successful_refund
     @gateway.expects(:ssl_request).returns(successful_refund_response)
 
-    response = @gateway.refund(@amount, "authorization", @options)
+    response = @gateway.refund(@amount, 'authorization', @options)
     assert_success response
 
     assert_equal '59306246f2a0c5f327a15dd6492687e197aca7eda179da08', response.authorization
@@ -80,15 +89,15 @@ class EbanxTest < Test::Unit::TestCase
   def test_failed_refund
     @gateway.expects(:ssl_request).returns(failed_refund_response)
 
-    response = @gateway.refund(@amount, "", @options)
+    response = @gateway.refund(@amount, '', @options)
     assert_failure response
-    assert_equal "BP-REF-CAN-2", response.error_code
+    assert_equal 'BP-REF-CAN-2', response.error_code
   end
 
   def test_successful_void
     @gateway.expects(:ssl_request).returns(successful_void_response)
 
-    response = @gateway.void("authorization", @options)
+    response = @gateway.void('authorization', @options)
     assert_success response
 
     assert_equal '5930629dde0899dc53b3557ea9887aa8f3d264a91d115d40', response.authorization
@@ -98,9 +107,9 @@ class EbanxTest < Test::Unit::TestCase
   def test_failed_void
     @gateway.expects(:ssl_request).returns(failed_void_response)
 
-    response = @gateway.void("", @options)
+    response = @gateway.void('', @options)
     assert_failure response
-    assert_equal "BP-CAN-1", response.error_code
+    assert_equal 'BP-CAN-1', response.error_code
   end
 
   def test_successful_verify
@@ -124,7 +133,28 @@ class EbanxTest < Test::Unit::TestCase
 
     response = @gateway.verify(@credit_card, @options)
     assert_failure response
-    assert_equal "NOK", response.error_code
+    assert_equal 'NOK', response.error_code
+  end
+
+  def test_successful_store_and_purchase
+    @gateway.expects(:ssl_request).returns(successful_store_response)
+
+    store = @gateway.store(@credit_card, @options)
+    assert_success store
+    assert_equal 'a61a7c98535718801395991b5112f888d359c2d632e2c3bb8afe75aa23f3334d7fd8dc57d7721f8162503773063de59ee85901b5714a92338c6d9c0352aee78c|visa', store.authorization
+
+    @gateway.expects(:ssl_request).returns(successful_purchase_with_stored_card_response)
+
+    response = @gateway.purchase(@amount, store.authorization, @options)
+    assert_success response
+  end
+
+  def test_error_response_with_invalid_creds
+    @gateway.expects(:ssl_request).returns(invalid_cred_response)
+
+    response = @gateway.store(@credit_card, @options)
+    assert_failure response
+    assert_equal 'Invalid integration key', response.message
   end
 
   def test_scrub
@@ -136,7 +166,7 @@ class EbanxTest < Test::Unit::TestCase
 
   def pre_scrubbed
     %q(
-      request_body={\"integration_key\":\"1231000\",\"operation\":\"request\",\"payment\":{\"amount_total\":\"1.00\",\"currency_code\":\"USD\",\"merchant_payment_code\":\"2bed75b060e936834e354d944aeaa892\",\"name\":\"Longbob Longsen\",\"email\":\"unspecified@example.com\",\"document\":\"853.513.468-93\",\"payment_type_code\":\"visa\",\"creditcard\":{\"card_number\":\"4111111111111111\",\"card_name\":\"Longbob Longsen\",\"card_due_date\":\"9/2018\",\"card_cvv\":\"123\"},\"address\":\"Rua E\",\"street_number\":\"1040\",\"city\":\"Maracana\u{fa}\",\"state\":\"CE\",\"zipcode\":\"61919-230\",\"country\":\"BR\",\"phone_number\":\"(555)555-5555\"}}
+      request_body={\"integration_key\":\"Ac1EwnH0ud2UIndICS37l0\",\"operation\":\"request\",\"payment\":{\"amount_total\":\"1.00\",\"currency_code\":\"USD\",\"merchant_payment_code\":\"2bed75b060e936834e354d944aeaa892\",\"name\":\"Longbob Longsen\",\"email\":\"unspecified@example.com\",\"document\":\"853.513.468-93\",\"payment_type_code\":\"visa\",\"creditcard\":{\"card_number\":\"4111111111111111\",\"card_name\":\"Longbob Longsen\",\"card_due_date\":\"9/2018\",\"card_cvv\":\"123\"},\"address\":\"Rua E\",\"street_number\":\"1040\",\"city\":\"Maracana\u{fa}\",\"state\":\"CE\",\"zipcode\":\"61919-230\",\"country\":\"BR\",\"phone_number\":\"(555)555-5555\"}}
     )
   end
 
@@ -172,7 +202,13 @@ class EbanxTest < Test::Unit::TestCase
 
   def successful_capture_response
     %(
-      {"payment":{"hash":"592dd65824427e4f5f50564c118f399869637bfb30d54f5b","pin":"081043654","merchant_payment_code":"8424e3000d64d056fbd58639957dc1c4","order_number":null,"status":"CO","status_date":"2017-05-30 17:30:16","open_date":"2017-05-30 17:30:15","confirm_date":"2017-05-30 17:30:16","transfer_date":null,"amount_br":"3.31","amount_ext":"1.00","amount_iof":"0.01","currency_rate":"3.3000","currency_ext":"USD","due_date":"2017-06-02","instalments":"1","payment_type_code":"visa","transaction_status":{"acquirer":"EBANX","code":"OK","description":"Sandbox - Test credit card, transaction captured"},"pre_approved":true,"capture_available":false,"customer":{"document":"85351346893","email":"unspecified@example.com","name":"LONGBOB LONGSEN","birth_date":null}},"status":"SUCCESS"}
+      {"payment":{"hash":"5dee94502bd59660b801c441ad5a703f2c4123f5fc892ccb","pin":"675968133","country":"br","merchant_payment_code":"b98b2892b80771b9dadf2ebc482cb65d","order_number":null,"status":"CO","status_date":"2019-12-09 18:37:05","open_date":"2019-12-09 18:37:04","confirm_date":"2019-12-09 18:37:05","transfer_date":null,"amount_br":"4.19","amount_ext":"1.00","amount_iof":"0.02","currency_rate":"4.1700","currency_ext":"USD","due_date":"2019-12-12","instalments":"1","payment_type_code":"visa","details":{"billing_descriptor":"DEMONSTRATION"},"transaction_status":{"acquirer":"EBANX","code":"OK","description":"Accepted"},"pre_approved":true,"capture_available":false,"customer":{"document":"85351346893","email":"unspecified@example.com","name":"LONGBOB LONGSEN","birth_date":null}},"status":"SUCCESS"}
+    )
+  end
+
+  def failed_partial_capture_response
+    %(
+      {"status":"ERROR", "status_code":"BP-CAP-11", "status_message":"Partial capture not available"}
     )
   end
 
@@ -203,6 +239,24 @@ class EbanxTest < Test::Unit::TestCase
   def failed_void_response
     %(
       {"status":"ERROR","status_code":"BP-CAN-1","status_message":"Parameter hash not informed"}
+    )
+  end
+
+  def successful_store_response
+    %(
+      {"status":"SUCCESS","payment_type_code":"visa","token":"a61a7c98535718801395991b5112f888d359c2d632e2c3bb8afe75aa23f3334d7fd8dc57d7721f8162503773063de59ee85901b5714a92338c6d9c0352aee78c","masked_card_number":"411111xxxxxx1111"}
+    )
+  end
+
+  def successful_purchase_with_stored_card_response
+    %(
+      {"payment":{"hash":"59d3e2955021c5e2b180e1ea9670e2d9675c15453a2ab346","pin":"252076123","merchant_payment_code":"a942f8a68836e888fa8e8af1e8ca4bf2","order_number":null,"status":"CO","status_date":"2017-10-03 19:18:45","open_date":"2017-10-03 19:18:44","confirm_date":"2017-10-03 19:18:45","transfer_date":null,"amount_br":"3.31","amount_ext":"1.00","amount_iof":"0.01","currency_rate":"3.3000","currency_ext":"USD","due_date":"2017-10-06","instalments":"1","payment_type_code":"visa","details":{"billing_descriptor":""},"transaction_status":{"acquirer":"EBANX","code":"OK","description":"Accepted"},"pre_approved":true,"capture_available":false,"customer":{"document":"85351346893","email":"unspecified@example.com","name":"NOT PROVIDED","birth_date":null}},"status":"SUCCESS"}
+    )
+  end
+
+  def invalid_cred_response
+    %(
+      {"status":"ERROR","status_code":"DA-1","status_message":"Invalid integration key"}
     )
   end
 end
