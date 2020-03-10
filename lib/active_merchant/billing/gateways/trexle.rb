@@ -90,6 +90,7 @@ module ActiveMerchant #:nodoc:
           gsub(/(number\\?":\\?")(\d*)/, '\1[FILTERED]').
           gsub(/(cvc\\?":\\?")(\d*)/, '\1[FILTERED]')
       end
+
       private
 
       def add_amount(post, money, options)
@@ -105,6 +106,7 @@ module ActiveMerchant #:nodoc:
 
       def add_address(post, creditcard, options)
         return if creditcard.kind_of?(String)
+
         address = (options[:billing_address] || options[:address])
         return unless address
 
@@ -120,7 +122,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_invoice(post, options)
-        post[:description] = options[:description] || "Active Merchant Purchase"
+        post[:description] = options[:description] || 'Active Merchant Purchase'
       end
 
       def add_creditcard(post, creditcard)
@@ -145,41 +147,42 @@ module ActiveMerchant #:nodoc:
 
       def headers(params = {})
         result = {
-          "Content-Type" => "application/json",
-          "Authorization" => "Basic #{Base64.strict_encode64(options[:api_key] + ':').strip}"
+          'Content-Type' => 'application/json',
+          'Authorization' => "Basic #{Base64.strict_encode64(options[:api_key] + ':').strip}"
         }
 
         result['X-Partner-Key'] = params[:partner_key] if params[:partner_key]
         result['X-Safe-Card'] = params[:safe_card] if params[:safe_card]
         result
       end
-      
+
       def commit(method, action, params, options)
         url = "#{test? ? test_url : live_url}/#{action}"
         raw_response = ssl_request(method, url, post_data(params), headers(options))
         parsed_response = parse(raw_response)
-        success_response(parsed_response) 
+        success_response(parsed_response)
       rescue ResponseError => e
         error_response(parse(e.response.body))
       rescue JSON::ParserError
         unparsable_response(raw_response)
       end
-  
+
       def success_response(body)
         return invalid_response unless body['response']
-      
+
         response = body['response']
         Response.new(
-         true,
-         response['status_message'],
-         body,
-         authorization: token(response),
-         test: test?
+          true,
+          response['status_message'],
+          body,
+          authorization: token(response),
+          test: test?
         )
       end
 
       def error_response(body)
         return invalid_response unless body['error']
+
         Response.new(
           false,
           body['error'],
@@ -190,13 +193,13 @@ module ActiveMerchant #:nodoc:
       end
 
       def unparsable_response(raw_response)
-        message = "Invalid JSON response received from Trexle. Please contact support@trexle.com if you continue to receive this message."
+        message = 'Invalid JSON response received from Trexle. Please contact support@trexle.com if you continue to receive this message.'
         message += " (The raw response returned by the API was #{raw_response.inspect})"
         return Response.new(false, message)
       end
-      
+
       def invalid_response
-        message = "Invalid response."
+        message = 'Invalid response.'
         return Response.new(false, message)
       end
 
@@ -206,7 +209,8 @@ module ActiveMerchant #:nodoc:
 
       def parse(body)
         return {} if body.blank?
-        JSON.parse(body) 
+
+        JSON.parse(body)
       end
 
       def post_data(parameters = {})
