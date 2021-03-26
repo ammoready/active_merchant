@@ -113,11 +113,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def capture(money, transaction_id, options = {})
-        post                   = { transaction: {} }
-        post[:amount]          = amount(money)
-        post[:tax_amount]      = options[:tax_amount] unless options[:tax_amount].nil?
-        post[:tax_exempt]      = options[:tax_exempt] || false
-        post[:shipping_amount] = options[:shipping_amount] unless options[:shipping_amount].nil?
+        post = { transaction: { transaction_amount: amount(money) } }
 
         commit(:authcomplete, post, transaction_id)
       end
@@ -127,9 +123,15 @@ module ActiveMerchant #:nodoc:
       end
 
       def refund(money, transaction_id)
-        post = { amount: amount(money) }
+        post = {
+          transaction: {
+            previous_transaction_id: transaction_id,
+            payment_method: 'cc',
+            transaction_amount: amount(money)
+          }
+        }
 
-        commit(:refund, post, transaction_id)
+        commit(:refund, post)
       end
 
       def verify(credit_card, options={})
