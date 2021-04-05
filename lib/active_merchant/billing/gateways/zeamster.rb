@@ -98,7 +98,7 @@ module ActiveMerchant #:nodoc:
         add_customer_data(post, credit_card, options)
         add_address(post, options)
 
-        commit(:sale, post)
+        commit(:sale, :post, post)
       end
 
       def authorize(money, credit_card, options = {})
@@ -109,17 +109,17 @@ module ActiveMerchant #:nodoc:
         add_customer_data(post, credit_card, options)
         add_address(post, options)
 
-        commit(:authonly, post)
+        commit(:authonly, :post, post)
       end
 
       def capture(money, transaction_id, options = {})
         post = { transaction: { transaction_amount: amount(money) } }
 
-        commit(:authcomplete, post, transaction_id)
+        commit(:authcomplete, :post, post, transaction_id)
       end
 
       def void(transaction_id)
-        commit(:void, { transaction: {} }, transaction_id)
+        commit(:void, :put, { transaction: {} }, transaction_id)
       end
 
       def refund(money, transaction_id)
@@ -131,7 +131,7 @@ module ActiveMerchant #:nodoc:
           }
         }
 
-        commit(:refund, post)
+        commit(:refund, :post, post)
       end
 
       def verify(credit_card, options={})
@@ -186,8 +186,8 @@ module ActiveMerchant #:nodoc:
         JSON.parse(body).deep_symbolize_keys
       end
 
-      def commit(action, parameters, transaction_id = nil)
-        response = raw_ssl_request(:post, transaction_url(action, transaction_id), post_data(action, parameters), headers)
+      def commit(action, method, parameters, transaction_id = nil)
+        response = raw_ssl_request(method, transaction_url(action, transaction_id), post_data(action, parameters), headers)
         response_body = parse(response.body)
 
         Response.new(
