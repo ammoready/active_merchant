@@ -1,3 +1,5 @@
+require 'cgi'
+
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class BlueDogGateway < Gateway
@@ -259,7 +261,7 @@ module ActiveMerchant #:nodoc:
         parameters[:password] = @options[:password]
 
         # Turn the POST params hash into a key/value string.
-        parameters.map { |key, value| "#{key}=#{URI.escape(value)}" }.join('&')
+        parameters.map { |key, value| "#{key}=#{CGI.escape(value)}" }.join('&')
       end
     end
   end
